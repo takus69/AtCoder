@@ -17,7 +17,7 @@ class TestSample(unittest.TestCase):
         x = [1, -4, 7, -10, 13]
         y = [-2, 5, -8, 11, -14]
         z = [3, -6, -9, -12, 15]
-        # self.assertEqual(run(n, m, x, y, z), 54)
+        self.assertEqual(run(n, m, x, y, z), 54)
 
 
 if __name__ == '__main__':
