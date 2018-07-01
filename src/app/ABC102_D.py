@@ -1,18 +1,17 @@
 def run(n, a):
     sp = [n-3, n-2, n-1]
+    sp_c = sp.copy()
     (p, q, r, s) = calc_sum(a, sp)
     max1 = max((p, q, r, s))
     min1 = min((p, q, r, s))
     diff1 = max1 - min1
     diff_t = 0
     t_sp = target_sp(sp, n)
-    print(t_sp)
     if t_sp == []:
         return diff1
     while(diff1 != diff_t):
         diff_t = diff1
         for t in t_sp:
-            sp_c = sp.copy()
             sp_c[t] -= 1
             (p, q, r, s) = calc_sum(a, sp_c)
             max2 = max((p, q, r, s))
@@ -21,11 +20,8 @@ def run(n, a):
             if diff1 > diff2:
                 diff1 = diff2
                 sp = sp_c.copy()
-                t_sp = target_sp(sp, n)
-                break
-    print(a)
-    print(sp)
-    print(t_sp)
+        t_sp = target_sp(sp_c, n)
+        sp_c = sp.copy()
     return diff1
 
 
@@ -41,9 +37,12 @@ def target_sp(sp, n):
     ret = []
     if sp[0] > 1:
         ret.append(0)
-    if sp[1] - sp[0] > 1:
         ret.append(1)
-    if sp[2] - sp[1] > 1:
+        ret.append(2)
+    elif sp[1] - sp[0] > 1:
+        ret.append(1)
+        ret.append(2)
+    elif sp[2] - sp[1] > 1:
         ret.append(2)
     return ret
 
