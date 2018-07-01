@@ -1,49 +1,37 @@
 def run(n, a):
-    sp = [n-3, n-2, n-1]
-    sp_c = sp.copy()
-    (p, q, r, s) = calc_sum(a, sp)
-    max1 = max((p, q, r, s))
-    min1 = min((p, q, r, s))
-    diff1 = max1 - min1
-    diff_t = 0
-    t_sp = target_sp(sp, n)
-    if t_sp == []:
-        return diff1
-    while(diff1 != diff_t):
-        diff_t = diff1
-        for t in t_sp:
-            sp_c[t] -= 1
-            (p, q, r, s) = calc_sum(a, sp_c)
-            max2 = max((p, q, r, s))
-            min2 = min((p, q, r, s))
-            diff2 = max2 - min2
-            if diff1 > diff2:
-                diff1 = diff2
-                sp = sp_c.copy()
-        t_sp = target_sp(sp_c, n)
-        sp_c = sp.copy()
-    return diff1
+    sum_a = [sum(a[0:i+1]) for i in range(n)]
+    ret = sum_a[n - 1]
+    for i in range(2, n-1):
+        j_l = search_j(sum_a[: i], 0)
+        j_r = search_j(sum_a[i:], sum_a[i - 1]) + i
+        p = sum_a[j_l]
+        q = sum_a[i - 1] - p
+        r = sum_a[j_r] - q - p
+        s = sum_a[n - 1] - r - q - p
+        diff = max(p, q, r, s) - min(p, q, r, s)
+        if ret > diff:
+            ret = diff
+    return ret
 
 
-def calc_sum(a, sp):
-    p = sum(a[:sp[0]])
-    q = sum(a[sp[0]:sp[1]])
-    r = sum(a[sp[1]:sp[2]])
-    s = sum(a[sp[2]:])
-    return (p, q, r, s)
-
-
-def target_sp(sp, n):
-    ret = []
-    if sp[0] > 1:
-        ret.append(0)
-        ret.append(1)
-        ret.append(2)
-    elif sp[1] - sp[0] > 1:
-        ret.append(1)
-        ret.append(2)
-    elif sp[2] - sp[1] > 1:
-        ret.append(2)
+def search_j(sum_a, before):
+    n = len(sum_a)
+    sum_l = sum_a[0] - before
+    sum_r = sum_a[n - 1] - sum_a[0]
+    diff1 = sum_r - sum_l
+    ret = 0
+    for i in range(n - 1):
+        sum_l = sum_a[i] - before
+        sum_r = sum_a[n - 1] - sum_a[i]
+        diff2 = sum_r - sum_l
+        if diff2 < 0:
+            if abs(diff1) < abs(diff2):
+                return i - 1
+            else:
+                return i
+        else:
+            diff1 = diff2
+            ret = i
     return ret
 
 
