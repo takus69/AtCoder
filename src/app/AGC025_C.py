@@ -4,7 +4,8 @@ def run(n, ln, rn):
         dic[i] = [ln[i], rn[i]]
     sort_ln = sorted(dic.items(), key=lambda x: -x[1][0])
     sort_rn = sorted(dic.items(), key=lambda x: x[1][1])
-    if abs(max([l[1][0] for l in sort_ln])) > abs(min([r[1][1] for r in sort_rn])):
+    if abs(max([l[1][0] for l in sort_ln])) > abs(
+            min([r[1][1] for r in sort_rn])):
         idx = 0
     else:
         idx = 1
