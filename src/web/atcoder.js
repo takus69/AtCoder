@@ -4,9 +4,15 @@ function submit() {
     s.innerHTML = program;
     var ele = document.getElementById('result');
     ele.appendChild(s);
+    var req = new XMLHttpRequest();
+    req.open('get', 'https://www.google.co.jp', true);
+    req.send(null);
+    req.onload = function() {
+        console.log(req.responseText);
+    }
 }
 
-a = [];
+var a = [];
 
 
 function get_input1() {
@@ -15,9 +21,4 @@ function get_input1() {
 
 function get_input2() {
     return a[1];
-}
-
-console.log = function(message) {
-    console.log(message);
-    return message;
 }
