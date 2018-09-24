@@ -15,25 +15,39 @@ def run(n, m):
     for i in range(2, m):
         if m == 1:
             break
+        if i*i > m:
+            break
         if m % i == 0:
             cnt = 0
             while m % i == 0:
                 cnt += 1
                 m //= i
                 primes.append(i)
-            # ans *= comb(cnt+n-1, n-1)
-            # ans %= mod
-    counts = collections.Counter(primes)
+            ans *= comb(cnt+n-1, n-1)
+            ans %= mod
+    # counts = collections.Counter(primes)
     # print(counts)
-    for (_, v) in counts.items():
-        ans *= comb(v+n-1, n-1)
+    # for (_, v) in counts.items():
+    #     ans *= comb(v+n-1, n-1)
+    #     ans %= mod
+    if m != 1:
+        ans *= n
         ans %= mod
     return ans
 
 
 def comb(n, r):
-    mul = math.factorial(n) // math.factorial(n - r)
-    div = math.factorial(r)
+    if r > (n-r):
+        r = n-r
+    mul = 1
+    div = 1
+    for i in range(r):
+        mul *= n-i
+        div *= i+1
+        mul %= mod
+        div %= mod
+    # mul = math.factorial(n) // math.factorial(n - r)
+    # div = math.factorial(r)
     # mul = factorial(n) // factorial(n - r)
     # div = factorial(r)
     mul %= mod
