@@ -1,65 +1,65 @@
-from collections import defaultdict
 import math
+import sys
+import collections
+
+
+mod = 1000000007
+sys.setrecursionlimit(mod)
+fact = {1: 1}
 
 
 def run(n, m):
-    MAX = 10**9+7
-    count = search_divisor_num_2(m)
-    return 2**count * n % MAX
-
-
-def make_prime_list_2(num):
-    if num < 2:
-        return []
-
-    # 0のものは素数じゃないとする
-    prime_list = [i for i in range(num + 1)]
-    prime_list[1] = 0 # 1は素数ではない
-    num_sqrt = math.sqrt(num)
-
-    for prime in prime_list:
-        if prime == 0:
-            continue
-        if prime > num_sqrt:
+    # print('{}を{}個の数列で表現'.format(m, n))
+    ans = 1
+    primes = []
+    for i in range(2, m):
+        if m == 1:
             break
+        if m % i == 0:
+            cnt = 0
+            while m % i == 0:
+                cnt += 1
+                m //= i
+                primes.append(i)
+            # ans *= comb(cnt+n-1, n-1)
+            # ans %= mod
+    counts = collections.Counter(primes)
+    # print(counts)
+    for (_, v) in counts.items():
+        ans *= comb(v+n-1, n-1)
+        ans %= mod
+    return ans
 
-        for non_prime in range(2 * prime, num, prime):
-            prime_list[non_prime] = 0
 
-    return [prime for prime in prime_list if prime != 0]
+def comb(n, r):
+    mul = math.factorial(n) // math.factorial(n - r)
+    div = math.factorial(r)
+    # mul = factorial(n) // factorial(n - r)
+    # div = factorial(r)
+    mul %= mod
+    div %= mod
+    return (mul * modpow(div, (mod-2))) % mod
 
 
-def prime_factorization_1(num):
-    if num <= 1:
-        return False
+'''
+def factorial(n):
+    if n in fact:
+        return fact[n]
     else:
-        num_sqrt = math.floor(math.sqrt(num))
-        prime_list = make_prime_list_2(num_sqrt)
-
-        dict_counter = defaultdict(int)
-        for prime in prime_list:
-            while num % prime == 0:
-                dict_counter[prime] += 1
-                num //= prime
-        if num != 1:
-            dict_counter[num] += 1
-
-        dict_counter = dict(dict_counter)
-
-        return dict_counter
+        fact[n] = n*factorial(n-1)
+        return fact[n]
+'''
 
 
-def search_divisor_num_2(num):
-    if num < 0:
-        return None
-    elif num == 1:
+def modpow(a, p):
+    if p == 0:
         return 1
+    if p % 2 == 0:
+        halfp = p // 2
+        half = modpow(a, halfp)
+        return int((half * half) % mod)
     else:
-        divisor_num = 1
-        dict_fact = prime_factorization_1(num)
-        for value in dict_fact.values():
-            divisor_num *= (value + 1)
-        return divisor_num
+        return int((a * modpow(a, p-1)) % mod)
 
 
 def main():
