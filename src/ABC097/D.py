@@ -1,38 +1,44 @@
-def run(N, A):
-    r = 0
-    A_sum = 0
-    A_xor = 0
-    A_and = 0
-    r = -1
-    cnt = 0
-    for l in range(N):
-        while (A_sum - A_xor == 2*A_and) and r < N-1:
-            r += 1
-            A_sum += A[r]
-            A_xor ^= A[r]
-            A_and &= A[r]
-        if A_sum - A_xor == 2*A_and:
-            cnt += r - l + 1
+class UnionFind():
+    def run(self, N, M, p, x):
+        '''Union find(ランクなし)'''
+        # 初期化。index0はとりあえず0で埋める
+        self.part = []
+        for i in range(N+1):
+            self.part.append(i) 
+        # 経路をまとめる
+        for i in range(M):
+            self.union(x[i][0], x[i][1])
+        cnt = 0
+        for i in range(1, N+1):
+            if self.root(i) == self.root(p[i-1]):
+                cnt += 1
+        return cnt
+
+    def root(self, x):
+        if self.part[x] == x:
+            return x
         else:
-            cnt += r - l
-        '''
-        元に戻す
-        xor:
-        0 0 => 0
-        0 1 => 1
-        1 0 => 1
-        1 1 => 0
-        '''
-        A_sum -= A[l]
-        A_xor ^= A[l]
-        A_and = 2*(A_sum - A_xor)
-    return cnt
+            # 経路圧縮
+            self.part[x] = self.root(self.part[x])
+            return self.part[x]
+    
+    def union(self, x, y):
+        x_root = self.root(self.part[x])
+        y_root = self.root(self.part[y])
+        if x_root == y_root:
+            pass
+        else:
+            self.part[x_root] = y_root
 
 
 def main():
-    N = int(input())
-    A = list(map(int, input().split()))
-    print(run(N, A))
+    N, M = map(int, input().split())
+    p = list(map(int, input().split()))
+    x = []
+    for i in range(M):
+        x.append(list(map(int, input().split())))
+    obj = UnionFind()
+    print(obj.run(N, M, p, x))
 
 
 if __name__ == '__main__':
