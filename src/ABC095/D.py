@@ -1,57 +1,41 @@
 def run(N, C, XV):
-    print(N, C, XV)
-    # 右回り、左回りで食べる
-    energy1 = 0
-    tmp = 0
+    '''
+    左回りでxまで食べた後に、右回りのyまで食べると考える
+    yは、xの次の皿まで食べることが可能なので、事前に最大
+    となる食べ方を計算しておく
+    逆回りも同様に計算して最大のものをとる
+    '''
+    # ある位置まで食べた時のカロリー
+    cal_l = [0]
+    cal_r = [0]
+    # ある位置までの中で最大のカロリーとなるカロリー
+    cal_max_l = [0]
+    cal_max_r = [0]
+    cal = 0
     for i in range(N):
-        tmp += XV[i][1]
-        if energy1 < tmp-XV[i][0]:
-            energy1 = tmp-XV[i][0]
-            max_x1 = XV[i][0]
-            print(energy1, max_x1)
-    energy2 = 0
-    tmp = 0
+        cal += XV[i][1]
+        cal_l.append(cal-XV[i][0]*2)
+        cal_max = cal_max_l[i]
+        if cal_max < cal-XV[i][0]:
+            cal_max = cal-XV[i][0]
+        cal_max_l.append(cal_max)
+    cal = 0
     for i in range(N):
-        tmp += XV[N-i-1][1]
-        if energy2 < tmp-(C-XV[N-i-1][0]):
-            energy2 = tmp-(C-XV[N-i-1][0])
-            max_x2 = C-XV[N-i-1][0]
-            print(energy2, max_x2)
+        cal += XV[N-i-1][1]
+        cal_r.append(cal-(C-XV[N-i-1][0])*2)
+        cal_max = cal_max_r[i]
+        if cal_max < cal-C+XV[N-i-1][0]:
+            cal_max = cal-C+XV[N-i-1][0]
+        cal_max_r.append(cal_max)
 
-    # 右回りで食べた後、左回りで食べる(右回りは距離2倍になる)
-    energy3 = 0
-    tmp = 0
-    for i in range(N):
-        tmp += XV[i][1]
-        if energy3 < tmp-XV[i][0]*2:
-            energy3 = tmp-XV[i][0]*2
-            max_x3 = XV[i][0]
-            print(energy3, max_x3)
-
-    # 左回りで食べた後、右回りで食べる(左回りは距離2倍になる)
-    energy4 = 0
-    tmp = 0
-    for i in range(N):
-        tmp += XV[N-i-1][1]
-        if energy4 < tmp-(C-XV[N-i-1][0])*2:
-            energy4 = tmp-(C-XV[N-i-1][0])*2
-            max_x4 = C-XV[N-i-1][0]
-            print(energy4, max_x4)
-    print('energy')
-    print(energy1, max_x1)
-    print(energy2, max_x2)
-    print(energy3, max_x3)
-    print(energy4, max_x4)
-
-    if C >= max_x2 + max_x3:
-        energy3 = energy3 + energy2
-    else:
-        energy3 = 0
-    if C >= max_x1 + max_x4:
-        energy4 = energy1 + energy4
-    else:
-        energy4 = 0
-    return max(energy1, energy2, energy3, energy4)
+    ret = 0
+    # 左回りが先
+    for i in range(len(cal_l)):
+        ret = max(ret, cal_l[i]+cal_max_r[N-i])
+    # 右回りが先
+    for i in range(len(cal_r)):
+        ret = max(ret, cal_r[i]+cal_max_l[N-i])
+    return ret
 
 
 def main():
