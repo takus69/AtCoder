@@ -1,25 +1,37 @@
 def run(H, W, K):
     # あみだくじの通る道のパターン
-    f_h = {(1, 0): 0}
-    f_w = {(1, 0): 1}
+    dp = {(1, 0): 1}
     for w in range(2, W+1):
-        f_h[(w, 0)] = 0
-        f_w[(w, 0)] = 0
+        dp[(w, 0)] = 0
+    # ダミーで0とW+1には0を入れておく
+    for h in range(0, H+1):
+        dp[(0, h)] = 0
+        dp[(W+1, h)] = 0
+    # あみだくじの通る道のパターンを計算
     for h in range(1, H+1):
         for w in range(1, W+1):
-            f_h[(w, h)] = f_h[(w, h-1)] + f_w[(w, h-1)]
-        for w in range(1, W+1):
-            if w - 1 == 0:
-                f_w[(w, h)] = f_h[(w+1, h)]
-            elif w + 1 == W+1:
-                f_w[(w, h)] = f_h[(w-1, h)]
-            else:
-                f_w[(w, h)] = f_h[(w+1, h)] + f_h[(w-1, h)]
+            '''
+            hの位置で他の線のパターンを計算
+            w-1からwの線があるとき
+            1からw-2までw-3本の線が引ける、w+1からWまでW-w-1本の線が引ける
+            1本なら2パターン、2本なら3パターン、3本なら5パターン、4本なら1+4+3=8パターン
+            5本なら1+5+6+1=13パターン、6本なら1+6+10+4=21、7本なら1+7+15+10+1=34パターン
+            ''' 
+            a = get_coef(w-3, W-w-1)
+            b = get_coef(w-2, W-w-1)
+            c = get_coef(w-2, W-w-2)
+            dp[(w, h)] = (a*dp[(w-1, h-1)] + b*dp[(w, h-1)] + c*dp[(w+1, h-1)]) % 1000000007
     # あみだのKに行くための経路の合計
-    print(f_h[K, H] + f_w[K, H])
-    print(f_h)
-    print(f_w)
-    return (f_h, f_w)
+    return dp[K, H]
+
+
+def get_coef(w_l, w_r):
+    coef = [1, 2, 3, 5, 8, 13, 21, 34]
+    if w_l < 0:
+        w_l = 0
+    if w_r < 0:
+        w_r = 0
+    return coef[w_l]*coef[w_r]
 
 
 def main():
