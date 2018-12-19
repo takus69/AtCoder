@@ -1,7 +1,9 @@
 def run(N, A):
     cnt = 0
     beki = [2**i for i in range(1, 32)]
-    for a in A:
+    A = sorted(A, reverse=True)
+    for i in len(A):
+        for j in 
         tmp1 = []
 
 
