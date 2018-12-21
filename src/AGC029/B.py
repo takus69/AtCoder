@@ -1,13 +1,21 @@
+import collections
+
+
 def run(N, A):
     cnt = 0
     beki = [2**i for i in range(1, 32)]
     A = sorted(A, reverse=True)
-    for i in len(A):
-        for j in 
-        tmp1 = []
-
-
-    return (N, A)
+    used = collections.Counter(A)
+    for a in A:
+        if used[a] == 0:
+            continue
+        used[a] -= 1
+        while beki[-1] > 2*a:
+            beki.pop(-1)
+        if used[beki[-1] - a] >= 1:
+            cnt += 1
+            used[beki[-1] - a] -= 1
+    return cnt
 
 
 def main():
