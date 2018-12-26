@@ -1,39 +1,27 @@
 def run(N):
+    # 3, 5, 7のみの数値を全列挙
+    targets = make357(N)
     cnt = 0
-    for i in range(3, N+1, 2):
-        if not valid(i, 1):
-            continue
-        if not valid(i, 2):
-            continue
-        if not valid(i, 3):
-            continue
-        is3 = False
-        is5 = False
-        is7 = False
-        plus = 1
-        for j in range(len(str(i))):
-            a = (i // 10**j) % 10
-            if a == 3:
-                is3 = True
-            elif a == 5:
-                is5 = True
-            elif a == 7:
-                is7 = True
-            else:
-                plus = 0
-                continue
-        if not is3 or not is5 or not is7:
-            plus = 0
-        cnt += plus
+    for t in targets:
+        if all(t.count(s) for s in '357'):
+            cnt += 1
     return cnt
 
 
-def valid(n, i):
-    a = (n // 10**(i-1)) % 10
-    if a == 3 or a == 5 or a == 7:
-        return True
-    else:
-        return False
+def make357(N):
+    '''
+    3, 5 ,7のみを含むN以下の数を全列挙
+    ただし文字列として格納
+    '''
+    targets = []
+    targets_i = ['3', '5', '7']  # i桁の357のみを含む数
+    for _ in range(1, len(str(N))):
+        tmp = []
+        for s in '357':
+            tmp += [t + s for t in targets_i if int(t + s) <= N]
+        targets_i = tmp
+        targets += targets_i
+    return targets
 
 
 def main():
