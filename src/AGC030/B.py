@@ -1,69 +1,58 @@
 def run(L, N, X):
-    X = [0] + X
-    r = -1
-    l = 1
-    i = 0
+    '''
+    最初に向きを変える点をsとする
+    その後は向きを変えながら最後の点まで行けばよい
+    最後の点をfとする
+    ある点をiと置く
+    0からiの左回りの距離をli, 右回りの距離をriと置くと
+    全体の距離は2*liのsからfの和と2*riのNからfの和を加算し
+    最後の回りが左回りなら上記からlf+2*rfを減算し、
+    右回りなら2*lf+rfを減算すれば全体の距離がでる
+    sを1からfの場合すべてを求め、その最大値を出力すればよい
+    ただし最初の回る方向が右と左両方を求める必要がある
+    累積和を使えば、2*liのsからfの和をO(1)で求められる
+    '''
+    # 累積和取得
+    l_sum = {0: 0}
+    r_sum = {N+1: 0}
+    for i in range(1, N+1):
+        l_sum[i] = l_sum[i-1] + X[i-1]
+    for i in range(N, 0, -1):
+        r_sum[i] = r_sum[i+1] + L - X[i-1]
+    # 開始左回り
     ret = 0
-    dr = 0
-    dl = 0
-    while l != len(X) + r:
-        if i < 0:
-            dr = X[i] - X[r]
-            dl = L - X[i] + X[l]
+    for s in range(1, N+1):
+        # 折り返す点の数
+        nodes = (N - s + 1)
+        # 最終地点
+        f = int(s + (nodes - (nodes % 2)) / 2)
+        if nodes % 2 == 1:
+            last_dir_l = True
         else:
-            dr = L - X[r] + X[i]
-            dl = X[l] - X[i]
-        if i % 2 == 0:
-            ret += dr
-            i = r
-            r -= 1
-            if r <= -len(X):
-                r = -len(X)
+            last_dir_l = False
+        if last_dir_l:
+            tmp = 2*(l_sum[f] - l_sum[s-1]) + 2*(r_sum[f+1]) - X[f-1]
         else:
-            ret += dl
-            i = l
-            l += 1
-            if l >= len(X):
-                l = 0
-    if i < 0:
-        dr = X[i] - X[r]
-        dl = L - X[i] + X[l]
-    else:
-        dr = L - X[r] + X[i]
-        dl = X[l] - X[i]
-    r = -1
-    l = 1
-    i = 0
-    ret2 = 0
-    dr = 0
-    dl = 0
-    while l != len(X) + r:
-        if i < 0:
-            dr = X[i] - X[r]
-            dl = L - X[i] + X[l]
+            tmp = 2*(l_sum[f-1] - l_sum[s-1]) + 2*(r_sum[f]) - (L - X[f-1])
+        ret = max(ret, tmp)
+
+    # 開始右回り
+    ret = 0
+    for s in range(1, N+1):
+        # 折り返す点の数
+        nodes = (N - (L - s) + 1)
+        # 最終地点
+        f = int((nodes + (nodes % 2)) / 2)
+        if nodes % 2 == 1:
+            last_dir_r = True
         else:
-            dr = L - X[r] + X[i]
-            dl = X[l] - X[i]
-        if i % 2 == 1:
-            ret2 += dr
-            i = r
-            r -= 1
-            if r <= -len(X):
-                r = -len(X)
+            last_dir_r = False
+        if last_dir_r:
+            tmp = 2*(l_sum[f-1]) + 2*(r_sum[f] - r_sum[s+1]) - (L - X[f])
         else:
-            ret2 += dl
-            i = l
-            l += 1
-            if l >= len(X):
-                l = 0
-    if i < 0:
-        dr = X[i] - X[r]
-        dl = L - X[i] + X[l]
-    else:
-        dr = L - X[r] + X[i]
-        dl = X[l] - X[i]
-    ret2 += max(dr, dl)
-    return max(ret, ret2)
+            tmp = 2*(l_sum[f]) + 2*(r_sum[f+1] - r_sum[s+1]) - X[f]
+        ret = max(ret, tmp)
+    return ret
 
 
 def main():
