@@ -37,10 +37,9 @@ def run(L, N, X):
         ret = max(ret, tmp)
 
     # 開始右回り
-    ret = 0
     for s in range(1, N+1):
         # 折り返す点の数
-        nodes = (N - (L - s) + 1)
+        nodes = s
         # 最終地点
         f = int((nodes + (nodes % 2)) / 2)
         if nodes % 2 == 1:
@@ -48,9 +47,9 @@ def run(L, N, X):
         else:
             last_dir_r = False
         if last_dir_r:
-            tmp = 2*(l_sum[f-1]) + 2*(r_sum[f] - r_sum[s+1]) - (L - X[f])
+            tmp = 2*(l_sum[f-1]) + 2*(r_sum[f] - r_sum[s+1]) - (L - X[f-1])
         else:
-            tmp = 2*(l_sum[f]) + 2*(r_sum[f+1] - r_sum[s+1]) - X[f]
+            tmp = 2*(l_sum[f]) + 2*(r_sum[f+1] - r_sum[s+1]) - X[f-1]
         ret = max(ret, tmp)
     return ret
 
