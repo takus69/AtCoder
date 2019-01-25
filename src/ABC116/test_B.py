@@ -5,9 +5,9 @@ from B import run
 
 class TestSample(unittest.TestCase):
     def test_run(self):
-        self.assertEqual(run(1234567876), 34)
-        self.assertEqual(run(35753), 0)
-        self.assertEqual(run(1111111111), 642)
+        self.assertEqual(run(8), 5)
+        self.assertEqual(run(7), 18)
+        self.assertEqual(run(54), 114)
 
 
 if __name__ == '__main__':
