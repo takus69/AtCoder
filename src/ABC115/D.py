@@ -13,6 +13,8 @@ def run(N, X):
     C(N-1)+2<X<=2*C(N-1)+2のとき、Fn(X) = Fn-1(C(N-1)) + Fn-1(X-C(N-1)-2) + 1
     X = 2*C(N-1)+3のとき、Fn(X) = 2*Fn-1(C(N-1)) + 1
     '''
+    global c
+    c = [1]
     for i in range(N):
         c.append(3+2*c[i])
     return get_fnx(N, X)
