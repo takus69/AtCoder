@@ -40,14 +40,18 @@ def run(N, K, A):
     ret = 1
     for i in range(k_n+1):
         tmp1 = 0
+        max_flg = False
         for j in range(max_a):
-            if max_a - j > k_n - i:
-                # K[j]が0だとcnt1[j]を、1だとN-cnt1[j]をかける
-                tmp1 += bit_v[j] * (cnt1[j]**(1-int(K_bit[j]))) * ((N-cnt1[j])**(int(K_bit[j])))
-            elif max_a - j == k_n - i:
+            if max_a - j == k_n - i:  # Kの対象桁を0とするパターン
                 # 1だと0に変える、0だと0のまま
                 tmp1 += bit_v[j] * cnt1[j]
-            else:
+                # 1=>0の時はフラグを付与
+                if K_bit[j] == '1':
+                    max_flg = True
+            elif not max_flg:  # Kの各桁をそのままに使うパターン
+                # K[j]が0だとcnt1[j]を、1だとN-cnt1[j]をかける
+                tmp1 += bit_v[j] * (cnt1[j]**(1-int(K_bit[j]))) * ((N-cnt1[j])**(int(K_bit[j])))
+            else:  # Kの前の桁で1=>0として、その後は最大になるようにとるパターン
                 tmp1 += bit_v[j] * max(cnt1[j], N - cnt1[j])
         ret = max(ret, tmp1)
     return ret
