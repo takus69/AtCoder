@@ -27,7 +27,11 @@ def run(K):
         n = n_max
         change = n_max*2 - K
         c1 = [i for i in range(1, n_max+1)]
-        c2 = [i for i in range(2, change+1)] + [i for i in range(n_max+1, n_max*2+1-change)] + [1]
+        # c - 1 + n_max - c + 1 (c>0)
+        # 0 + n_max (c==0)
+        c2 = [i for i in range(2, change+1)] + [i for i in range(n_max+1, n_max*2+1-change)]
+        if change > 0:
+            c2 += [1]
         for i in range(n_max):
             shift = (i//2) * 2
             if i % 2 == 0:
