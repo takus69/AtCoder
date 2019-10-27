@@ -1,27 +1,23 @@
 def run(N, K, V):
     ret = 0
-    L_cal = {(0, 0): 0}
-    R_cal = {(0, 0): 0}
-    for L_get in range(1, K+1):
-        lists = V[:L_get]
-        sorted_lists = sorted(lists)
-        sum_lists = sum(lists)
-        for L_set in range(L_get+1):
-            L_cal[(L_get, L_set)] = sum_lists - sum(sorted_lists[:L_set])
-    for R_get in range(1, K+1):
-        lists = V[-R_get:]
-        sorted_lists = sorted(lists)
-        sum_lists = sum(lists)
-        for R_set in range(R_get+1):
-            R_cal[(R_get, R_set)] = sum_lists - sum(sorted_lists[:R_set])
-    for L_K in range(K+1):
-        R_K = K - L_K
-        for L_get in range(L_K+1):
-            L_set = L_K - L_get
-            for R_get in range(R_K+1):
-                R_set = R_K - R_get
-                if L_set <= L_get and R_set <= R_get:
-                    ret = max(ret, L_cal[(L_get, L_set)]+R_cal[(R_get, R_set)])
+    for L_get in range(K+1):
+        for R_get in range(K-L_get+1):
+            if L_get + R_get > N:
+                break
+            for Leave in range(K-L_get-R_get+1):
+                if Leave > L_get + R_get:
+                    break
+                if L_get == 0:
+                    L_lists = []
+                else:
+                    L_lists = V[:L_get]
+                if R_get == 0:
+                    R_lists = []
+                else:
+                    R_lists = V[-R_get:]
+                lists = L_lists + R_lists
+                sorted_lists = sorted(lists)
+                ret = max(ret, sum(lists) - sum(sorted_lists[:Leave]))
     return ret
 
 
