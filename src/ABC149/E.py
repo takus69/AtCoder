@@ -2,7 +2,7 @@ def run(N, M, A):
     A = sorted(A, reverse=True)
     right = A[0] * 2
     left = 0
-    while left < right:
+    while left <= right:
         X = (left + right) // 2
         # 左手の相手がaで、満足度がX以上となる組合せの数
         cnt = 0
