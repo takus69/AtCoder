@@ -1,16 +1,54 @@
 def run(N, M, A):
     A = sorted(A, reverse=True)
-    n1 = M // 3
-    n2 = M % 3
+    right = A[0] * 2
+    left = 0
+    while left < right:
+        X = (left + right) // 2
+        # 左手の相手がaで、満足度がX以上となる組合せの数
+        cnt = 0
+        for a in A:
+            cnt += search(A, X - a)
+        if cnt >= M:
+            res = X
+            left = X + 1
+        else:
+            right = X - 1
+    X = res
+    # Xが決まったので、累積和で組合せの数分の値を求める
+    sum_A = [0]
+    for a in sorted(A):
+        sum_A.append(sum_A[-1] + a)
+    sum_cnt = 0
     ans = 0
-    for i in range(n1):
-        tmp_ans = 4*sum(A[:n1-i]) + 2*sum(A[1:n1-i+1])
-        if n2 == 1:
-            tmp_ans += 2 * A[n1-i+1]
-        elif n2 == 2:
-            tmp_ans += 3 * A[n1-i+1] + A[n1-i+2]
-        ans = max(ans, tmp_ans)
+    for a in A:
+        cnt = search(A, X - a)
+        sum_cnt += cnt
+        if cnt > 0:
+            ans += cnt * a + sum_A[-1] - sum_A[-cnt-1]
+    if sum_cnt > M:
+        ans -= X * (sum_cnt - M)
     return ans
+
+
+def search(A, X):
+    '''
+    AのリストからX以上となる数値がいくつか探す
+    Aはソート済み(降順)
+    二分探索で実装O(logN)
+    leftとrightはチェック未
+    middleはループ終了後チェック済み
+    '''
+    left = 0
+    right = len(A) - 1
+    res = 0
+    while left <= right:
+        middle = (left + right) // 2
+        if A[middle] >= X:
+            res = middle + 1
+            left = middle + 1
+        else:
+            right = middle - 1
+    return res
 
 
 def main():
