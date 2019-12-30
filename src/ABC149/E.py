@@ -1,5 +1,19 @@
 def run(N, M, A):
+    '''
+    Aiが10^5なので、searchを以下に変えられる
+    サイズ10**5のリストで、その満足度を持つ数の件数を事前計算しておけばO(1)で求められる
+    '''
     A = sorted(A, reverse=True)
+    cnt_A = [len(A)]
+    pre_a = 0
+    cnt_dict_A = {}
+    for a in sorted(A):
+        cnt_dict_A[a] = cnt_dict_A.get(a, 0) + 1
+    next_cnt = cnt_A[-1]
+    for a in sorted(cnt_dict_A.keys()):
+        cnt_A.extend([next_cnt]*(a-pre_a))
+        pre_a = a
+        next_cnt = cnt_A[-1]-cnt_dict_A[a]
     right = A[0] * 2
     left = 0
     while left <= right:
@@ -7,7 +21,12 @@ def run(N, M, A):
         # 左手の相手がaで、満足度がX以上となる組合せの数
         cnt = 0
         for a in A:
-            cnt += search(A, X - a)
+            # cnt += search(A, X - a)
+            if X - a <= A[0]:
+                if X - a >= 0:
+                    cnt += cnt_A[X - a]
+                else:
+                    cnt += cnt_A[0]
         if cnt >= M:
             res = X
             left = X + 1
