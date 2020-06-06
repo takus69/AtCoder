@@ -2,77 +2,64 @@ N, L = map(int, input().split())
 x = list(map(int, input().split()))
 T1, T2, T3 = map(int, input().split())
 
-
-def add_time(x1, x2, x3, x4):
-    '''
-    4つずつ進むときの時間
-    引数は障害物があるか
-    '''
-    t3 = T1 + T2*3  # 行動3
-    t1111 = T1*4  # 行動1111
-    if x1:
-        t1111 += T3
-    if x2:
-        t1111 += T3
-    if x3:
-        t1111 += T3
-    t22 = T1*2 + T2*2  # 行動22
-    if x2:
-        t22 += T3
-    t112 = T1*3 + T2  # 行動112, 121, 211
-    t121 = t112
-    t211 = t112
-    if x1:
-        t112 += T3
-        t121 += T3
-    if x2:
-        t112 += T3
-        t211 += T3
-    if x3:
-        t121 += T3
-        t211 += T3
-    t = min(t3, t1111, t22, t112, t121, t211)
-    if x0:
-        t += T3
-    return t
-
-
-shou = L // 4
-amari = L % 4
-ans = 0
+block_time = {i: 0 for i in range(L)}
 x_i = 0
-now = 0
-if now == x[x_i]:
-    ans += T3
-for i in range(shou):
-    now = 4*i
-    if now + 1 == x[x_i]:
-        x1 = True
+for i in range(L):
+    if x_i >= N:
+        break
+    if x[x_i] == i:
+        block_time[i] = T3
         x_i += 1
-    else:
-        x1 = False
-    if now + 2 == x[x_i]:
-        x2 = True
-        x_i += 1
-    else:
-        x2 = False
-    if now + 3 == x[x_i]:
-        x3 = True
-        x_i += 1
-    else:
-        x3 = False
-    if now + 4 == x[x_i]:
-        x4 = True
-        x_i += 1
-    ans += add_time(x1, x2, x3, x4)
-    print(ans)
 
-# 残りの部分
-now = shou * 4
-if amari == 1:
-    t = min(T1, T1*(1/2) + T2*(1/2))
-    if now == x[x_i]:
-        t += T3
-    ans += t
 
-print(ans)
+def add_run(i, dp, x_i, x):
+    '''
+    i: 今の位置
+    dp: iの位置に着地する最小の時間
+    x_i: 今まで通ってない障害物のインデックスの最小値
+    x: 障害物の場所
+    '''
+    # 行動1
+    a1 = dp[i-1] + T1 + block_time[i-1]
+    # 行動2
+    if i-2 < 0:
+        a2 = 10**9
+    else:
+        a2 = dp[i-2] + T1 + T2 + block_time[i-2]
+    # 行動3
+    if i-4 < 0:
+        a3 = 10**9
+    else:
+        a3 = dp[i-4] + T1 + 3*T2 + block_time[i-4]
+
+    # ジャンプでゴールする場合
+    if i == L:
+        # 行動2
+        a2_j = dp[i-1] + T1//2 + T2//2 + block_time[i-1]
+        # 行動3
+        a3_j1 = dp[i-1] + T1//2 + T2//2 + block_time[i-1]
+        if i-2 >= 0:
+            a3_j2 = dp[i-2] + T1//2 + T2 + T2//2 + block_time[i-2]
+        else:
+            a3_j2 = 10**9
+        if i-3 >= 0:
+            a3_j3 = dp[i-3] + T1//2 + 2*T2 + T2//2 + block_time[i-3]
+        else:
+            a3_j3 = 10**9
+    else:
+        a2_j = 10**9
+        a3_j1 = 10**9
+        a3_j2 = 10**9
+        a3_j3 = 10**9
+
+    dp[i] = min(a1, a2, a3, a2_j, a3_j1, a3_j2, a3_j3)
+
+
+if __name__ == '__main__':
+    dp = [0 for _ in range(L+1)]
+    x_i = 1
+
+    for i in range(1, L+1):
+        # print(i, dp, x_i, x)
+        add_run(i, dp, x_i, x)
+print(dp[-1])
