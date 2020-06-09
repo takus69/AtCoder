@@ -1,51 +1,33 @@
-N, M = map(int, input().split())
-a = list(map(int, input().split()))
-
-n_a = [0] * N
-max_a = 0
-min_a = 10**9
-min_i = 1
+N = int(input())
+Q = int(input())
+row = {i: i for i in range(N)}
+col = {i: i for i in range(N)}
+t_cnt = 0
 ans = []
-
-
-def get_index(n_a, ai):
-    li = 0
-    ri = len(n_a) - 1
-    while li < ri:
-        n_i = li + (ri - li + 1) // 2
-        if n_a[n_i] >= ai:
-            # print('loop', n_i, li, ri)
-            li = n_i + 1
-        else:
-            ri = n_i
-            if n_a[ri-1] < ai:
-                ri -= 1
-            else:
-                li = ri
-    return ri
-
-
-for i in range(M):
-    ai = a[i]
-    # print('aa', ai, max_a, min_a, min_i)
-    if ai > max_a:
-        n_a[0] = ai
-        ans.append(1)
-        max_a = ai
-    elif ai > min_a:
-        n_i = get_index(n_a[0:min_i], ai)
-        # print('get_index:', n_i)
-        n_a[n_i] = ai
-        ans.append(n_i+1)
+for _ in range(Q):
+    query = input()
+    if query == '3':
+        t_cnt += 1
     else:
-        if min_i < N:
-            n_a[min_i] = ai
-            ans.append(min_i+1)
-            min_i += 1
-        else:
-            ans.append(-1)
-    min_a = n_a[min_i-1]
-    # print(n_a)
+        q, a, b = map(int, query.split())
+        a -= 1
+        b -= 1
+        if q == 1:
+            if t_cnt % 2 == 0:
+                row[a], row[b] = row[b], row[a]
+            else:
+                col[a], col[b] = col[b], col[a]
+        if q == 2:
+            if t_cnt % 2 == 0:
+                col[a], col[b] = col[b], col[a]
+            else:
+                row[a], row[b] = row[b], row[a]
+        if q == 4:
+            if t_cnt % 2 == 0:
+                ans.append(N*row[a] + col[b])
+            else:
+                ans.append(N*row[b] + col[a])
+    # print(query, row, col)
 
 for a in ans:
     print(a)
