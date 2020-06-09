@@ -10,8 +10,11 @@ ans = []
 
 def get_index(n_a, ai):
     li = 0
-    ri = len(n_a) - 1
+    ri = N - 1
+    # cnt = 0
     while li < ri:
+        # cnt += 1
+        # print(cnt)
         n_i = li + (ri - li + 1) // 2
         if n_a[n_i] >= ai:
             # print('loop', n_i, li, ri)
@@ -26,6 +29,7 @@ def get_index(n_a, ai):
 
 
 for i in range(M):
+    # print('M start:', M)
     ai = a[i]
     # print('aa', ai, max_a, min_a, min_i)
     if ai > max_a:
@@ -33,7 +37,8 @@ for i in range(M):
         ans.append(1)
         max_a = ai
     elif ai > min_a:
-        n_i = get_index(n_a[0:min_i], ai)
+        # print('get_index')
+        n_i = get_index(n_a, ai)
         # print('get_index:', n_i)
         n_a[n_i] = ai
         ans.append(n_i+1)
@@ -45,6 +50,7 @@ for i in range(M):
         else:
             ans.append(-1)
     min_a = n_a[min_i-1]
+    # print('M end')
     # print(n_a)
 
 for a in ans:
