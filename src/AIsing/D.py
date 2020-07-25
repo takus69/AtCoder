@@ -1,7 +1,5 @@
 N = int(input())
 X_bin = input()
-#N = 10**5
-#X_bin = '1' * N
 
 X_int = int(X_bin, 2)  # bin => int
 
@@ -50,4 +48,3 @@ for i in range(N):
         next_cnt = X_cnt + 1
         next_int = f_p + pow(2, (N-i-1), next_cnt)
     print(calc_ans(next_int, next_cnt))
-    #calc_ans(next_cnt, next_cnt)
