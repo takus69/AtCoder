@@ -1,47 +1,37 @@
-import sys
-
-
 N = int(input())
 X_bin = input()
 
 X_int = int(X_bin, 2)  # bin => int
-dp = {1: 1}
-bin_cnt = {}
-
-sys.setrecursionlimit(10**5)
 
 
 def calc_bin_cnt(next_int):
-    if next_int in bin_cnt.keys():
-        cnt = bin_cnt[next_int]
-    else:
-        next_bin = format(next_int, 'b')
-        # popcount
-        cnt = 0
-        for i in next_bin:
-            if i == '1':
-                cnt += 1
+    if next_int == 0:
+        return 0
+    next_bin = bin(next_int)[2:]
+    # popcount
+    cnt = 0
+    for i in next_bin:
+        if i == '1':
+            cnt += 1
     return cnt
 
 
-def calc_ans(next_int):
-    ans = 0
-    while next_int > 0:
-        key = next_int
-        if key in dp.keys():
-            ans += dp[key]
-            break
-        else:
-            cnt = calc_bin_cnt(next_int)
-            bin_cnt[next_int] = cnt
-            next_int = next_int % cnt
-            ans += 1
-            dp[key] = ans
+def calc_ans(next_int, cnt=None):
+    if next_int == 0:
+        return 0
+    if cnt is None:
+        cnt = calc_bin_cnt(next_int)
+    next_int = next_int % cnt
+    if next_int > 0:
+        ans = calc_ans(next_int) + 1
+    else:
+        ans = 1
     return ans
 
 
+X_cnt = calc_bin_cnt(X_int)
 for i in range(N):
     if X_bin[i] == '1':
-        print(calc_ans(X_int - (2**(N-i-1))))
+        print(calc_ans(X_int - (2**(N-i-1)), X_cnt-1))
     else:
-        print(calc_ans(X_int + (2**(N-i-1))))
+        print(calc_ans(X_int + (2**(N-i-1)), X_cnt+1))
