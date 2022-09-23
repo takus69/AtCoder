@@ -8,7 +8,31 @@ def solve(n, m, x, y, lattice):
     ans = []
     cnt = 0
 
-    while cnt < 1000:
+
+    # 2点間に格子点があるかチェック
+    def is_point_not_exist(x1, y1, x2, y2):
+        ret = True
+        x_diff = x2 - x1
+        y_diff = y2 - y1
+        for i in range(1, max(abs(x_diff), abs(y_diff))):
+            if x_diff == 0:
+                x_gap = 0
+            else:
+                x_gap = x_diff / abs(x_diff)
+            if y_diff == 0:
+                y_gap = 0
+            else:
+                y_gap = y_diff / abs(y_diff)
+
+            xi = x1 + i * x_gap
+            yi = y1 + i * y_gap
+            if (xi, yi) in lattice.keys():
+                ret = False
+                break
+        return ret
+
+
+    while cnt < 10000:
         cnt += 1
         t_i = random.randint(0, m-1)
         x2 = x[t_i]
@@ -53,7 +77,7 @@ def solve(n, m, x, y, lattice):
         # x1の格子点をチェック
         x1 = x4
         y1 = y2
-        if lattice[(x1, y1)] == -1:
+        if lattice[(x1, y1)] == -1 and is_point_not_exist(x1, y1, x4, y4) and is_point_not_exist(x1, y1, x2, y2):
             x.append(x1)
             y.append(y1)
             lattice[(x1, y1)] = len(x)-1
@@ -108,7 +132,7 @@ def solve(n, m, x, y, lattice):
             x1 = x3
             y1 = y2 - (y3 - y2)
             if y1 >= 0:
-                if lattice[(x1, y1)] == -1:
+                if lattice[(x1, y1)] == -1 and is_point_not_exist(x1, y1, x4, y4) and is_point_not_exist(x1, y1, x2, y2):
                     x.append(x1)
                     y.append(y1)
                     lattice[(x1, y1)] = len(x)-1
