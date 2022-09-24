@@ -112,7 +112,6 @@ def solve(n, m, x, y, lattice):
                 flag = True
                 continue
 
-    '''
         ## 45度
         if not flag:
             # y軸下方向の探索
@@ -150,10 +149,8 @@ def solve(n, m, x, y, lattice):
                             y4 = y3-i-1
                             flag4_2 = True
                             break
-            else:
-                break
             if not flag4_1 and not flag4_2:
-                break
+                continue
             # x1の格子点をチェック
             x1 = x3
             y1 = y2 - (y3 - y2)
@@ -166,7 +163,6 @@ def solve(n, m, x, y, lattice):
                         lattice[(x1, y1)] = len(x)-1
                         ans.append([x1, y1, x2, y2, x3, y3, x4, y4])
                         k += 1
-    '''
     return k, ans
 
 
