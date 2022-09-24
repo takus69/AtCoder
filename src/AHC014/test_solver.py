@@ -19,4 +19,4 @@ for file in files:
         lattice[(xx, yy)] = i
 
     k, ans = solve(n, m, x, y, lattice)
-    print(k)
+    print(file, k)

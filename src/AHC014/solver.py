@@ -7,10 +7,34 @@ def solve(n, m, x, y, lattice):
     k = 0
     ans = []
     cnt = 0
+    use_line = set()
+
+
+    # 利用済みの線分がないかをチェック
+    def line_not_exists(x1, y1, x2, y2, x3, y3, x4, y4, use_line):
+        ret = True
+        if (x1, y1, x2, y2) in use_line:
+            ret = False
+        elif (x2, y2, x3, y3) in use_line:
+            ret = False
+        elif (x3, y3, x4, y4) in use_line:
+            ret = False
+        elif (x4, y4, x1, y1) in use_line:
+            ret = False
+        if ret:
+            use_line.add((x1, y1, x2, y2))
+            use_line.add((x2, y2, x1, y1))
+            use_line.add((x2, y2, x3, y3))
+            use_line.add((x3, y3, x2, y2))
+            use_line.add((x3, y3, x4, y4))
+            use_line.add((x4, y4, x3, y3))
+            use_line.add((x4, y4, x1, y1))
+            use_line.add((x1, y1, x4, y4))
+        return ret, use_line
 
 
     # 2点間に格子点があるかチェック
-    def is_point_not_exist(x1, y1, x2, y2):
+    def is_point_not_exists(x1, y1, x2, y2):
         ret = True
         x_diff = x2 - x1
         y_diff = y2 - y1
@@ -77,14 +101,16 @@ def solve(n, m, x, y, lattice):
         # x1の格子点をチェック
         x1 = x4
         y1 = y2
-        if lattice[(x1, y1)] == -1 and is_point_not_exist(x1, y1, x4, y4) and is_point_not_exist(x1, y1, x2, y2):
-            x.append(x1)
-            y.append(y1)
-            lattice[(x1, y1)] = len(x)-1
-            ans.append([x1, y1, x2, y2, x3, y3, x4, y4])
-            k += 1
-            flag = True
-            continue
+        if lattice[(x1, y1)] == -1 and is_point_not_exists(x1, y1, x4, y4) and is_point_not_exists(x1, y1, x2, y2):
+            line_check, use_line = line_not_exists(x1, y1, x2, y2, x3, y3, x4, y4, use_line)
+            if line_check:
+                x.append(x1)
+                y.append(y1)
+                lattice[(x1, y1)] = len(x)-1
+                ans.append([x1, y1, x2, y2, x3, y3, x4, y4])
+                k += 1
+                flag = True
+                continue
 
     '''
         ## 45度
@@ -132,12 +158,14 @@ def solve(n, m, x, y, lattice):
             x1 = x3
             y1 = y2 - (y3 - y2)
             if y1 >= 0:
-                if lattice[(x1, y1)] == -1 and is_point_not_exist(x1, y1, x4, y4) and is_point_not_exist(x1, y1, x2, y2):
-                    x.append(x1)
-                    y.append(y1)
-                    lattice[(x1, y1)] = len(x)-1
-                    ans.append([x1, y1, x2, y2, x3, y3, x4, y4])
-                    k += 1
+                if lattice[(x1, y1)] == -1 and is_point_not_exists(x1, y1, x4, y4) and is_point_not_exists(x1, y1, x2, y2):
+                    line_check, use_line = line_not_exists(x1, y1, x2, y2, x3, y3, x4, y4, use_line)
+                    if line_check:
+                        x.append(x1)
+                        y.append(y1)
+                        lattice[(x1, y1)] = len(x)-1
+                        ans.append([x1, y1, x2, y2, x3, y3, x4, y4])
+                        k += 1
     '''
     return k, ans
 
