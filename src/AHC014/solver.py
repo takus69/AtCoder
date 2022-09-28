@@ -1,9 +1,8 @@
 import random
 
 
-random.seed(0)
-
 def solve(n, m, x, y, lattice):
+    random.seed(0)
     k = 0
     ans = []
     cnt = 0
@@ -79,7 +78,7 @@ def solve(n, m, x, y, lattice):
                     flag3 = True
                     break
         if not flag3:
-            break
+            continue
         # x軸右方向の探索
         flag4 = False
         for xx in range(x2+1, n):
@@ -97,7 +96,7 @@ def solve(n, m, x, y, lattice):
                     flag4 = True
                     break
         if not flag4:
-            break
+            continue
         # x1の格子点をチェック
         x1 = x4
         y1 = y2
