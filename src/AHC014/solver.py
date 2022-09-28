@@ -55,9 +55,11 @@ def solve(n, m, x, y, lattice):
         return ret
 
 
-    while cnt < 10000:
+    while cnt < 30000:
         cnt += 1
-        t_i = random.randint(0, m-1)
+        t_m = m + k
+        # t_i = random.randint(0, m-1)
+        t_i = cnt % t_m
         x2 = x[t_i]
         y2 = y[t_i]
         ## 軸と並行
