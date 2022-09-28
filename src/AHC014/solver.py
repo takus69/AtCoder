@@ -163,6 +163,65 @@ def solve(n, m, x, y, lattice):
                         lattice[(x1, y1)] = len(x)-1
                         ans.append([x1, y1, x2, y2, x3, y3, x4, y4])
                         k += 1
+                        flag = True
+                        continue
+
+        if not flag:
+            # x軸右方向の探索
+            flag3_1 = False
+            flag3_2 = False
+            for i in range(n-x2-1):
+                if y2+i+1 <= n-1:
+                    if lattice[(x2+i+1, y2+i+1)] >= 0:
+                        x3 = x2+i+1
+                        y3 = y2+i+1
+                        flag3_1 = True
+                        break
+                if y2-i-1 >= 0:
+                    if lattice[(x2+i+1, y2-i-1)] >= 0:
+                        x3 = x2+i+1
+                        y3 = y2-i-1
+                        flag3_2 = True
+                        break
+            # x軸右方向の探索
+            flag4_1 = False
+            flag4_2 = False
+            if flag3_1:
+                for i in range(n-x3-1):
+                    if y3-i-1 >= 0:
+                        if lattice[(x3+i+1, y3-i-1)] >= 0:
+                            x4 = x3+i+1
+                            y4 = y3-i-1
+                            flag4_1 = True
+                            break
+            elif flag3_2:
+                for i in range(n-x3-1):
+                    if y3+i+1 <= n-1:
+                        if lattice[(x3+i+1, y3+i+1)] >= 0:
+                            x4 = x3+i+1
+                            y4 = y3+i+1
+                            flag4_2 = True
+                            break
+            if not flag4_1 and not flag4_2:
+                continue
+            # x1の格子点をチェック
+            x1 = x3
+            if flag4_1:
+                y1 = y2 - (y3 - y2)
+            elif flag4_2:
+                y1 = y2 + (y2 - y3)
+            if y1 >= 0 and y1 <= n-1:
+                if lattice[(x1, y1)] == -1 and is_point_not_exists(x1, y1, x4, y4) and is_point_not_exists(x1, y1, x2, y2):
+                    line_check, use_line = line_not_exists(x1, y1, x2, y2, x3, y3, x4, y4, use_line)
+                    if line_check:
+                        x.append(x1)
+                        y.append(y1)
+                        lattice[(x1, y1)] = len(x)-1
+                        ans.append([x1, y1, x2, y2, x3, y3, x4, y4])
+                        k += 1
+                        flag = True
+                        continue
+
     return k, ans
 
 
