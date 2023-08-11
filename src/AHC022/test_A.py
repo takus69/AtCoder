@@ -40,6 +40,7 @@ class MockJudge(Judge):
         v = self.temperature[r][c] + self.f[self.cnt]
         self.out_f.write(f'# measure i={i} y={y} x={x}, value={v}\n')
         self.measure_cost += 100 * (10 + abs(y) + abs(x))
+        self.cnt += 1
         return v
     
     def answer(self, estimate: List[int]) -> None:

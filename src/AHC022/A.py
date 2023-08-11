@@ -61,7 +61,11 @@ class Solver:
         estimate = [-1] * self.N
         for i_in in range(self.N):
 
-            measured_value = self.judge.measure(i_in, 0, 0)
+            measured_value = 0
+            retry_cnt = min(100, self.S*10)
+            for _ in range(retry_cnt):
+                measured_value += self.judge.measure(i_in, 0, 0)
+            measured_value /= retry_cnt
             print(f'# measure i={i_in} y=0 x=0, value={measured_value}')
             # answer the position with the temperature closest to the measured value
             min_diff = 9999
