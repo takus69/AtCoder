@@ -11,19 +11,19 @@ class Pos:
 class Judge:
     def set_temperature(self, temperature: List[List[int]]) -> None:
         for row in temperature:
-            print(" ".join(map(str, row)))
+            print(' '.join(map(str, row)))
         sys.stdout.flush()
 
     def measure(self, i: int, y: int, x: int) -> int:
-        print(f"{i} {y} {x}", flush=True)
+        print(f'{i} {y} {x}', flush=True)
         v = int(input())
         if v == -1:
-            print(f"something went wrong. i={i} y={y} x={x}", file=sys.stderr)
+            print(f'something went wrong. i={i} y={y} x={x}', file=sys.stderr)
             sys.exit(1)
         return v
 
     def answer(self, estimate: List[int]) -> None:
-        print("-1 -1 -1")
+        print('-1 -1 -1')
         for e in estimate:
             print(e)
         sys.stdout.flush()
@@ -62,7 +62,7 @@ class Solver:
         for i_in in range(self.N):
 
             measured_value = self.judge.measure(i_in, 0, 0)
-            print(f"# measure i={i_in} y=0 x=0, value={measured_value}")
+            print(f'# measure i={i_in} y=0 x=0, value={measured_value}')
             # answer the position with the temperature closest to the measured value
             min_diff = 9999
             for i_out, pos in enumerate(self.landing_pos):
@@ -74,15 +74,15 @@ class Solver:
 
 
 def main():
-    L, N, S = [int(v) for v in input().split(" ")]
+    L, N, S = [int(v) for v in input().split(' ')]
     landing_pos = []
     for _ in range(N):
-        y, x = (int(v) for v in input().split(" "))
+        y, x = (int(v) for v in input().split(' '))
         landing_pos.append(Pos(y, x))
 
     solver = Solver(L, N, S, landing_pos, Judge())
     solver.solve()
 
 
-if __name__ == "__main__":
+if __name__ == '__main__':
     main()
