@@ -93,10 +93,10 @@ class Solver:
                 diff = 0
             for rr in range(pre_r+1, r+1):
                 for pos in r_poses[rr]:
-                    temperature[pos.y][pos.x] = pre_temp - diff * (rr - pre_r)
+                    temperature[pos.y][pos.x] = int(pre_temp - diff * (rr - pre_r))
             pre_r, pre_temp = r, temp
         for pos, v in self.dic_pos.items():
-            temperature[pos[0]][pos[1]] = v['t']
+            temperature[pos[0]][pos[1]] = int(v['t'])
         return temperature
 
     def _predict(self, temperature: List[List[int]]) -> List[int]:
