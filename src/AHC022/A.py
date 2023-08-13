@@ -85,7 +85,7 @@ class Solver:
                 r_temps.append((r, temp))
         r_temps.append((self.L-1, r_temps[-1][1]))
         temperature = [[-1]*self.L for _ in range(self.L)]
-        pre_r, pre_temp = 0, r_temps[0][1]
+        pre_r, pre_temp = -1, r_temps[0][1]
         for r, temp in r_temps:
             if r != pre_r:
                 diff = (pre_temp - temp) // (r - pre_r)
