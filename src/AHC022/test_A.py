@@ -10,6 +10,7 @@ ToDo
 - 評価関数(Done)
 - 配置の最適化(徐々に変化)(Done)
 - 標準出力ON/OFF機能(Done)
+- L: 10, 25, 50 N: 60, 80, 100 S: 1, 9, 25, 49, 81, 400, 900の3*3*7=63パターンの結果評価(Done)
 - 相対位置による場所の推定方法
 '''
 
@@ -72,7 +73,7 @@ class MockJudge(Judge):
             print(f'計測時コスト: {self.measure_cost}')
             print(f'誤り数: {W}/{N}')
             print(f'得点: {score}')
-        return score, W, N
+        return score, W, N, self.landing_cost, self.measure_cost
         
 
 class TestA(unittest.TestCase):
