@@ -1,7 +1,7 @@
 import unittest
 from typing import List
 import math
-from A import Pos, Judge, Solver
+from A import Pos, Judge, Solver, Solver2
 '''
 ToDo
 - 生成inputによるシミュレーション(Done)
@@ -11,13 +11,14 @@ ToDo
 - 配置の最適化(徐々に変化)(Done)
 - 標準出力ON/OFF機能(Done)
 - L: 10, 25, 50 N: 60, 80, 100 S: 1, 9, 25, 49, 81, 400, 900の3*3*7=63パターンの結果評価(Done)
-- 相対位置による場所の推定方法
+- 相対位置による場所の推定方法(Done)
 '''
 
 class MockJudge(Judge):
-    def __init__(self, A, f, landing_pos, out_f, display=True):
+    def __init__(self, A, f, landing_pos, out_f, L, display=True):
         self.A = A
         self.f = f
+        self.L = L
         self.cnt = 0
         self.landing_pos = landing_pos
         self.out_f = out_f
@@ -41,13 +42,20 @@ class MockJudge(Judge):
         self.out_f.write(f'{i} {y} {x}\n')
         a = self.A[i]
         pos = self.landing_pos[a]
-        r = pos.y + y
-        c = pos.x + x
+        r = (pos.y + y)%self.L
+        c = (pos.x + x)%self.L
         v = max(0, min(1000, self.temperature[r][c] + self.f[self.cnt]))
-        self.out_f.write(f'# measure i={i} y={y} x={x}, value={v}\n')
-        self.measure_cost += 100 * (10 + abs(y) + abs(x))
         self.cnt += 1
+        self.out_f.write(f'# {self.cnt}: measure i={i} y={y} x={x}, value={v}\n')
+        self.measure_cost += 100 * (10 + abs(y) + abs(x))
         return v
+
+    def measure_n(self, i, y, x, retry_cnt):
+        measured_value = super().measure_n(i, y, x, retry_cnt)
+        if self.display:
+            print(f'# measure_n i={i} y={y} x={x}, retry_cnt={retry_cnt}, value={measured_value}')
+        self.out_f.write(f'# measure_n i={i} y={y} x={x}, retry_cnt={retry_cnt}, value={measured_value}\n')
+        return measured_value
     
     def answer(self, estimate: List[int]) -> None:
         super().answer(estimate)
@@ -93,8 +101,8 @@ class TestA(unittest.TestCase):
             f.append(int(in_f.readline()))
         in_f.close()
 
-        judge = MockJudge(A, f, landing_pos, out_f)
-        solver = Solver(L, N, S, landing_pos, judge)
+        judge = MockJudge(A, f, landing_pos, out_f, L)
+        solver = Solver2(L, N, S, landing_pos, judge)
         solver.solve()
         out_f.close()
         judge.evaluate()
@@ -104,7 +112,7 @@ class TestA(unittest.TestCase):
         landing_pos.append(Pos(1, 1))
         landing_pos.append(Pos(5, 5))
         landing_pos.append(Pos(2, 3))
-        solver = Solver(10, 3, 1, landing_pos, MockJudge([], [], [], None))
+        solver = Solver(10, 3, 1, landing_pos, MockJudge([], [], [], None, 10))
         print(solver._create_temperature())
 
         landing_pos = []
@@ -113,13 +121,13 @@ class TestA(unittest.TestCase):
         landing_pos.append(Pos(4, 5))
         landing_pos.append(Pos(2, 3))
         landing_pos.append(Pos(5, 8))
-        solver = Solver(10, 5, 1, landing_pos, MockJudge([], [], [], None))
+        solver = Solver(10, 5, 1, landing_pos, MockJudge([], [], [], None, 10))
         for t in solver._create_temperature():
             print(t)
 
     def test_solver(self):
         # L=1
-        solver = Solver(1, 0, 0, [], MockJudge([], [], [], None))
+        solver = Solver(1, 0, 0, [], MockJudge([], [], [], None, 1))
         r_posses = solver._get_r_poses()
         self.assertEqual(len(r_posses), 1)
         poses = r_posses[0]
@@ -128,7 +136,7 @@ class TestA(unittest.TestCase):
         self.assertEqual(poses[0].x, 0)
 
         # L=2
-        solver = Solver(2, 0, 0, [], MockJudge([], [], [], None))
+        solver = Solver(2, 0, 0, [], MockJudge([], [], [], None, 2))
         r_posses = solver._get_r_poses()
         self.assertEqual(len(r_posses), 2)
         poses = r_posses[0]
@@ -153,7 +161,7 @@ class TestA(unittest.TestCase):
         self.assertEqual(pos[1], 1)
 
         # L=3
-        solver = Solver(3, 0, 0, [], MockJudge([], [], [], None))
+        solver = Solver(3, 0, 0, [], MockJudge([], [], [], None, 3))
         r_posses = solver._get_r_poses()
         self.assertEqual(len(r_posses), 3)
         poses = r_posses[0]

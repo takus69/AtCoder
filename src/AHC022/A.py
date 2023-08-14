@@ -12,6 +12,7 @@ class Pos:
 class Judge:
     def __init__(self, display=True):
         self.display = display
+        self.cnt = 0
 
     def set_temperature(self, temperature: List[List[int]]) -> None:
         for row in temperature:
@@ -20,6 +21,7 @@ class Judge:
         sys.stdout.flush()
 
     def measure(self, i: int, y: int, x: int) -> int:
+        self.cnt += 1
         if self.display:
             print(f'{i} {y} {x}', flush=True)
         v = int(input())
@@ -27,6 +29,13 @@ class Judge:
             print(f'something went wrong. i={i} y={y} x={x}', file=sys.stderr)
             sys.exit(1)
         return v
+    
+    def measure_n(self, i_in, y, x, retry_cnt):
+        measured_value = 0
+        for _ in range(retry_cnt):
+            measured_value += self.measure(i_in, y, x)
+        measured_value /= retry_cnt
+        return measured_value
 
     def answer(self, estimate: List[int]) -> None:
         if self.display:
@@ -134,6 +143,50 @@ class Solver:
         return r_poses
 
 
+class Solver2(Solver):
+    def _create_temperature(self) -> List[List[int]]:
+        temperature = [[0]*self.L for _ in range(self.L)]
+        self.base_pos = self.landing_pos[0]
+        temperature[self.base_pos.y][self.base_pos.x] = 1000
+        return temperature
+
+    def _predict(self, temperature: List[List[int]]) -> List[int]:
+        estimate_dic = {}
+        # search base_pos
+        max_value = 0
+        base_i = -1
+        for i_in in range(self.N):
+            retry_cnt = 10
+            measured_value = self.judge.measure_n(i_in, 0, 0, retry_cnt)
+            if measured_value > max_value:
+                base_i = i_in
+                max_value = measured_value
+        estimate_dic[base_i] = 0
+        
+        # search other pos
+        retry_cnt = 4
+        for i_in in range(self.N):
+            if i_in == base_i:
+                continue
+            for i_out, pos in enumerate(self.landing_pos):
+                if i_out == 0:
+                    continue
+                if self.judge.cnt + retry_cnt > 10000:
+                    break
+                measured_value = self.judge.measure_n(i_in, self.base_pos.y-pos.y, self.base_pos.x-pos.x, retry_cnt)
+                if measured_value > 500:
+                    estimate_dic[i_in] = i_out
+                    break
+            if self.judge.cnt + retry_cnt > 10000:
+                break
+
+        # make estimate
+        estimate = [0] * self.N
+        for k, v in estimate_dic.items():
+            estimate[k] = v
+        return estimate
+
+
 def main():
     L, N, S = [int(v) for v in input().split(' ')]
     landing_pos = []
@@ -141,7 +194,10 @@ def main():
         y, x = (int(v) for v in input().split(' '))
         landing_pos.append(Pos(y, x))
 
-    solver = Solver(L, N, S, landing_pos, Judge())
+    if L < 49 or (L == 49 and N >= 80):
+        solver = Solver(L, N, S, landing_pos, Judge())
+    else:
+        solver = Solver2(L, N, S, landing_pos, Judge())
     solver.solve()
 
 

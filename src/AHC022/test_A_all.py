@@ -1,5 +1,5 @@
 import unittest
-from A import Pos, Judge, Solver
+from A import Pos, Judge, Solver, Solver2
 from test_A import MockJudge
 from typing import List
 import math
@@ -81,8 +81,8 @@ class TestA(unittest.TestCase):
             f.append(int(in_f.readline()))
         in_f.close()
 
-        judge = MockJudge(A, f, landing_pos, out_f, display=False)
-        solver = Solver(L, N, S, landing_pos, judge, display=False)
+        judge = MockJudge(A, f, landing_pos, out_f, L, display=False)
+        solver = Solver2(L, N, S, landing_pos, judge, display=False)
         solver.solve()
         out_f.close()
         return judge.evaluate()
