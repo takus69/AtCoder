@@ -194,7 +194,7 @@ def main():
         y, x = (int(v) for v in input().split(' '))
         landing_pos.append(Pos(y, x))
 
-    if L < 49 or (L == 49 and N >= 80):
+    if S < 49 or (S == 49 and N >= 80):
         solver = Solver(L, N, S, landing_pos, Judge())
     else:
         solver = Solver2(L, N, S, landing_pos, Judge())
