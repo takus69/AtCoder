@@ -163,19 +163,30 @@ class Solver2(Solver):
                 max_value = measured_value
         estimate_dic[base_i] = 0
         
+        # i_inから近い順にi_outを計測(i_outからbase(0)までの距離を測定して、小さい順に並べる)
+        base_dists = {}
+        base_pos = self.landing_pos[0]
+        for i_out in range(1, self.N):
+            out_pos = self.landing_pos[i_out]
+            base_dists[i_out] = int(abs(base_pos.x - out_pos.x) + abs(base_pos.y - base_pos.y))
+        base_dists = sorted(base_dists.items(), key = lambda x:x[1])
+
         # search other pos
         retry_cnt = 4
+        done_i = [0]
         for i_in in range(self.N):
             if i_in == base_i:
                 continue
-            for i_out, pos in enumerate(self.landing_pos):
-                if i_out == 0:
+            for i_out, _ in base_dists:
+                pos = self.landing_pos[i_out]
+                if i_out in done_i:
                     continue
                 if self.judge.cnt + retry_cnt > 10000:
                     break
                 measured_value = self.judge.measure_n(i_in, self.base_pos.y-pos.y, self.base_pos.x-pos.x, retry_cnt)
                 if measured_value > 500:
                     estimate_dic[i_in] = i_out
+                    done_i.append(i_out)
                     break
             if self.judge.cnt + retry_cnt > 10000:
                 break
@@ -187,18 +198,21 @@ class Solver2(Solver):
         return estimate
 
 
+def solve(L, N, S, landing_pos, judge, display=True):
+    if S < 49 or (S == 49 and N >= 80):
+        solver = Solver(L, N, S, landing_pos, judge, display=display) 
+    else:
+        solver = Solver2(L, N, S, landing_pos, judge, display=display)
+    solver.solve()
+
+
 def main():
     L, N, S = [int(v) for v in input().split(' ')]
     landing_pos = []
     for _ in range(N):
         y, x = (int(v) for v in input().split(' '))
         landing_pos.append(Pos(y, x))
-
-    if S < 49 or (S == 49 and N >= 80):
-        solver = Solver(L, N, S, landing_pos, Judge())
-    else:
-        solver = Solver2(L, N, S, landing_pos, Judge())
-    solver.solve()
+    solve(L, N, S, landing_pos, Judge())
 
 
 if __name__ == '__main__':
