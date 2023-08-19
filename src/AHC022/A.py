@@ -149,7 +149,23 @@ class Solver2(Solver):
         self._set_base()
 
     def _set_base(self):
-        self.base_out_i = 0
+        # 重心から一番近い位置をbaseとする
+        m_c_x, m_c_y = 0, 0
+        for pos in self.landing_pos:
+            m_c_x += pos.x
+            m_c_y += pos.y
+        m_c_x /= self.N
+        m_c_y /= self.N
+        
+        min_r = self.L * 2
+        min_r_i = 0
+        for i, pos in enumerate(self.landing_pos):
+            r = int(abs(pos.x - m_c_x) + abs(pos.y - m_c_y))
+            if r < min_r:
+                min_r = r
+                min_r_i = i
+
+        self.base_out_i = min_r_i
         self.base_pos = self.landing_pos[self.base_out_i]
 
     def _create_temperature(self) -> List[List[int]]:
@@ -226,28 +242,6 @@ class Solver2(Solver):
         else:
             diff_x = diff_x2
         return diff_y, diff_x
-
-
-def solve(L, N, S, landing_pos, judge, display=True):
-    if S < 25 or (S == 25 and N == 100):
-        solver = Solver(L, N, S, landing_pos, judge, display=display) 
-    else:
-        solver = Solver2(L, N, S, landing_pos, judge, display=display)
-    solver.solve()
-
-
-def main():
-    L, N, S = [int(v) for v in input().split(' ')]
-    landing_pos = []
-    for _ in range(N):
-        y, x = (int(v) for v in input().split(' '))
-        landing_pos.append(Pos(y, x))
-    solve(L, N, S, landing_pos, Judge())
-
-
-if __name__ == '__main__':
-    main()
-
 
 
 def solve(L, N, S, landing_pos, judge, display=True):
