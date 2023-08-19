@@ -144,10 +144,16 @@ class Solver:
 
 
 class Solver2(Solver):
-    def _create_temperature(self) -> List[List[int]]:
-        temperature = [[0]*self.L for _ in range(self.L)]
+    def __init__(self, L: int, N: int, S: int, landing_pos: List[Pos], judge, display=True):
+        super().__init__(L, N, S, landing_pos, judge, display=True)
+        self._set_base()
+
+    def _set_base(self):
         self.base_out_i = 0
         self.base_pos = self.landing_pos[self.base_out_i]
+
+    def _create_temperature(self) -> List[List[int]]:
+        temperature = [[0]*self.L for _ in range(self.L)]
         temperature[self.base_pos.y][self.base_pos.x] = 1000
         return temperature
 
