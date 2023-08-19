@@ -168,7 +168,8 @@ class Solver2(Solver):
         base_pos = self.landing_pos[0]
         for i_out in range(1, self.N):
             out_pos = self.landing_pos[i_out]
-            base_dists[i_out] = int(abs(base_pos.x - out_pos.x) + abs(base_pos.y - base_pos.y))
+            diff_y, diff_x = self._diff_base(base_pos, out_pos)
+            base_dists[i_out] = int(abs(diff_x) + abs(diff_y))
         base_dists = sorted(base_dists.items(), key = lambda x:x[1])
 
         # search other pos
@@ -183,7 +184,8 @@ class Solver2(Solver):
                     continue
                 if self.judge.cnt + retry_cnt > 10000:
                     break
-                measured_value = self.judge.measure_n(i_in, self.base_pos.y-pos.y, self.base_pos.x-pos.x, retry_cnt)
+                diff_y, diff_x = self._diff_base(self.base_pos, pos)
+                measured_value = self.judge.measure_n(i_in, diff_y, diff_x, retry_cnt)
                 if measured_value > 500:
                     estimate_dic[i_in] = i_out
                     done_i.append(i_out)
@@ -196,6 +198,50 @@ class Solver2(Solver):
         for k, v in estimate_dic.items():
             estimate[k] = v
         return estimate
+    
+    def _diff_base(self, base_pos, pos):
+        diff_y1 = base_pos.y - pos.y
+        if base_pos.y <= pos.y:
+            diff_y2 = self.L + base_pos.y - pos.y
+        else:
+            diff_y2 = base_pos.y - pos.y - self.L
+        if abs(diff_y1) < abs(diff_y2):
+            diff_y = diff_y1
+        else:
+            diff_y = diff_y2
+
+        diff_x1 = base_pos.x - pos.x
+        if base_pos.x <= pos.x:
+            diff_x2 = self.L + base_pos.x - pos.x
+        else:
+            diff_x2 = base_pos.x - pos.x - self.L
+        if abs(diff_x1) < abs(diff_x2):
+            diff_x = diff_x1
+        else:
+            diff_x = diff_x2
+        return diff_y, diff_x
+
+
+def solve(L, N, S, landing_pos, judge, display=True):
+    if S < 25 or (S == 25 and N == 100):
+        solver = Solver(L, N, S, landing_pos, judge, display=display) 
+    else:
+        solver = Solver2(L, N, S, landing_pos, judge, display=display)
+    solver.solve()
+
+
+def main():
+    L, N, S = [int(v) for v in input().split(' ')]
+    landing_pos = []
+    for _ in range(N):
+        y, x = (int(v) for v in input().split(' '))
+        landing_pos.append(Pos(y, x))
+    solve(L, N, S, landing_pos, Judge())
+
+
+if __name__ == '__main__':
+    main()
+
 
 
 def solve(L, N, S, landing_pos, judge, display=True):
