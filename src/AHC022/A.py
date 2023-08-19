@@ -170,7 +170,8 @@ class Solver2(Solver):
 
     def _create_temperature(self) -> List[List[int]]:
         temperature = [[0]*self.L for _ in range(self.L)]
-        temperature[self.base_pos.y][self.base_pos.x] = 1000
+        self.max_temperature = min(1000, self.S*10)
+        temperature[self.base_pos.y][self.base_pos.x] = self.max_temperature
         return temperature
 
     def _predict(self, temperature: List[List[int]]) -> List[int]:
@@ -208,7 +209,7 @@ class Solver2(Solver):
                     break
                 diff_y, diff_x = self._diff_base(self.base_pos, pos)
                 measured_value = self.judge.measure_n(i_in, diff_y, diff_x, retry_cnt)
-                if measured_value > 500:
+                if measured_value > self.max_temperature//2:
                     estimate_dic[i_in] = i_out
                     done_i.append(i_out)
                     break
