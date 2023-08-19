@@ -146,7 +146,8 @@ class Solver:
 class Solver2(Solver):
     def _create_temperature(self) -> List[List[int]]:
         temperature = [[0]*self.L for _ in range(self.L)]
-        self.base_pos = self.landing_pos[0]
+        self.base_out_i = 0
+        self.base_pos = self.landing_pos[self.base_out_i]
         temperature[self.base_pos.y][self.base_pos.x] = 1000
         return temperature
 
@@ -161,20 +162,19 @@ class Solver2(Solver):
             if measured_value > max_value:
                 base_i = i_in
                 max_value = measured_value
-        estimate_dic[base_i] = 0
+        estimate_dic[base_i] = self.base_out_i
         
         # i_inから近い順にi_outを計測(i_outからbase(0)までの距離を測定して、小さい順に並べる)
         base_dists = {}
-        base_pos = self.landing_pos[0]
         for i_out in range(1, self.N):
             out_pos = self.landing_pos[i_out]
-            diff_y, diff_x = self._diff_base(base_pos, out_pos)
+            diff_y, diff_x = self._diff_base(self.base_pos, out_pos)
             base_dists[i_out] = int(abs(diff_x) + abs(diff_y))
         base_dists = sorted(base_dists.items(), key = lambda x:x[1])
 
         # search other pos
         retry_cnt = max(1, int(self.S/100))  # max(1, int(self.S**2/40000))  # 4
-        done_i = [0]
+        done_i = [self.base_out_i]
         for i_in in range(self.N):
             if i_in == base_i:
                 continue
