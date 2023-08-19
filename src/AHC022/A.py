@@ -185,6 +185,10 @@ class Solver2(Solver):
             if measured_value > max_value:
                 base_i = i_in
                 max_value = measured_value
+            elif self.max_temperature <= 1000 and self.max_temperature < measured_value:
+                base_i = i_in
+                max_value = measured_value
+                break
         estimate_dic[base_i] = self.base_out_i
         
         # i_inから近い順にi_outを計測(i_outからbase(0)までの距離を測定して、小さい順に並べる)
