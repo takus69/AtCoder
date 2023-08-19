@@ -172,7 +172,7 @@ class Solver2(Solver):
         base_dists = sorted(base_dists.items(), key = lambda x:x[1])
 
         # search other pos
-        retry_cnt = 4
+        retry_cnt = max(1, int(self.S**2/40000))  # 4
         done_i = [0]
         for i_in in range(self.N):
             if i_in == base_i:
