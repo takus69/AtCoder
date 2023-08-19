@@ -16,8 +16,12 @@ ToDo
 - すでに分かっている対象は測定除外する(Done)
 - SolverとSolver2の比較処理(Done)
 - 計測コストの最適化(連続測定で、測定回数削減)⇒測定回数をSの値により最適化(Done)
+  - S*S/40000(得点はあがったものの、順位表は下がった)(Done)
+  - S/100(シミュレーションの得点はほぼ変わらず)(順位が上がったためこちらを採用)(Done)
 - S=900の対策(retry回数を変更)
 - 配置コストの最適化(Sが小さいものは1000でなくてもいい)
+- 基準の位置最適化(中心近くがいい？)
+- 基準からの測定でコストが少ない方を選択する
 '''
 
 class MockJudge(Judge):
@@ -92,8 +96,8 @@ class MockJudge(Judge):
 
 class TestA(unittest.TestCase):
     def test_simulator(self):
-        out_f = open('output.txt', 'w')
-        in_f = open('input.txt', 'r')
+        out_f = open('output900.txt', 'w')
+        in_f = open('input900.txt', 'r')
         L, N, S = [int(v) for v in in_f.readline().split(' ')]
         landing_pos = []
         for _ in range(N):
