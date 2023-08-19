@@ -199,7 +199,7 @@ class Solver2(Solver):
 
 
 def solve(L, N, S, landing_pos, judge, display=True):
-    if S < 49 or (S == 49 and N >= 80):
+    if S < 25 or (S == 25 and N == 100):
         solver = Solver(L, N, S, landing_pos, judge, display=display) 
     else:
         solver = Solver2(L, N, S, landing_pos, judge, display=display)
