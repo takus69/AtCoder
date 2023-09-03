@@ -112,6 +112,13 @@ class Solver:
         print(len(self.plan))
         for p in self.plan:
             print(p.k+1, p.i, p.j, p.s)
+    
+    def evaluate(self):
+        score = 0
+        for p in self.plan:
+            score += self.D[p.k] - self.S[p.k] + 1
+        score *= 1000000/(self.H*self.W*self.T)
+        print('score:', score)
 
 
 class Plan:
