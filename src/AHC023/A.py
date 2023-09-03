@@ -110,7 +110,7 @@ class Solver:
     def make_plan(self):
         # 計画作成
         self.plan = []
-        for k in range(min(self.K, 10)):
+        for k in range(min(self.K, 20)):
             found = False
             for i in range(self.H):
                 for j in range(self.W):
