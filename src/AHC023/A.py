@@ -42,9 +42,9 @@ class Solver:
                     self.adj[(i,j)].append((i,j+1))
                     self.adj[(i,j+1)].append((i,j))
 
-    def set_filepath(self, filepath):
-        self.in_file = open(os.path.join(filepath, 'input.txt'), 'r')
-        self.out_file = open(os.path.join(filepath, 'output.txt'), 'w')
+    def set_filepath(self, in_filename, out_filename):
+        self.in_file = open(in_filename, 'r')
+        self.out_file = open(out_filename, 'w')
 
     def input(self):
         if self.in_file is None:
