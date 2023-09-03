@@ -3,6 +3,10 @@ import os
 
 
 class Solver:
+    def __init__(self):
+        self.in_file = None
+        self.out_file = None
+
     def read_input(self):
         self.T, self.H, self.W, self.i0 = map(int, self.input().split())
         self.h = [[False]*self.W for _ in range(self.H-1)]
@@ -129,13 +133,17 @@ class Solver:
         self.print(str(len(self.plan)))
         for p in self.plan:
             self.print('{} {} {} {}'.format(p.k+1, p.i, p.j, p.s))
+        if self.in_file is not None:
+            self.in_file.close()
+            self.out_file.close()
     
     def evaluate(self):
         score = 0
         for p in self.plan:
             score += self.D[p.k] - self.S[p.k] + 1
         score *= 1000000/(self.H*self.W*self.T)
-        print('score:', int(score))
+        score = int(score)
+        return score
 
 
 class Plan:
