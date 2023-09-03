@@ -1,12 +1,13 @@
 from queue import Queue
+import os
 
 
 class Solver:
     def read_input(self):
-        self.T, self.H, self.W, self.i0 = map(int, input().split())
+        self.T, self.H, self.W, self.i0 = map(int, self.input().split())
         self.h = [[False]*self.W for _ in range(self.H-1)]
         for i in range(self.H-1):
-            in_h = input()
+            in_h = self.input()
             for j in range(self.W):
                 if in_h[j] == '1':
                     self.h[i][j] = True
@@ -14,16 +15,16 @@ class Solver:
                     self.h[i][j] = False
         self.v = [[False]*(self.W-1) for _ in range(self.H)]
         for i in range(self.H):
-            in_w = input()
+            in_w = self.input()
             for j in range(self.W-1):
                 if in_w[j] == '1':
                     self.v[i][j] = True
                 else:
                     self.v[i][j] = False
-        self.K = int(input())
+        self.K = int(self.input())
         self.S, self.D = [], []
         for _ in range(self.K):
-            s, d = map(int, input().split())
+            s, d = map(int, self.input().split())
             self.S.append(s)
             self.D.append(d)
 
@@ -40,6 +41,16 @@ class Solver:
                 if j+1 < self.W and not self.v[i][j]:
                     self.adj[(i,j)].append((i,j+1))
                     self.adj[(i,j+1)].append((i,j))
+
+    def set_filepath(self, filepath):
+        self.in_file = open(os.path.join(filepath, 'input.txt'), 'r')
+        self.out_file = open(os.path.join(filepath, 'output.txt'), 'w')
+
+    def input(self):
+        if self.in_file is None:
+            return input()
+        else:
+            return self.in_file.readline()
 
     def reachable(self, i, j, used):
         if used[i][j] or used[self.i0][0]:
@@ -108,17 +119,23 @@ class Solver:
                 if found:
                     break
 
+    def print(self, s):
+        if self.out_file is None:
+            print(s)
+        else:
+            self.out_file.write(s + '\n')
+
     def submission(self):
-        print(len(self.plan))
+        self.print(str(len(self.plan)))
         for p in self.plan:
-            print(p.k+1, p.i, p.j, p.s)
+            self.print('{} {} {} {}'.format(p.k+1, p.i, p.j, p.s))
     
     def evaluate(self):
         score = 0
         for p in self.plan:
             score += self.D[p.k] - self.S[p.k] + 1
         score *= 1000000/(self.H*self.W*self.T)
-        print('score:', score)
+        print('score:', int(score))
 
 
 class Plan:
