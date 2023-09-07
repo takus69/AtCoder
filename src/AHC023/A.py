@@ -31,6 +31,10 @@ class Solver:
             s, d = map(int, self.input().split())
             self.S.append(s)
             self.D.append(d)
+        self.KSD = []
+        for i in range(self.K):
+            self.KSD.append((i, self.S[i], self.D[i]))
+        self.KSD = sorted(self.KSD, key=lambda x:x[2], reverse=True)
 
         # 水路を考慮した移動可能な経路作成
         self.adj = {}
@@ -45,6 +49,31 @@ class Solver:
                 if j+1 < self.W and not self.v[i][j]:
                     self.adj[(i,j)].append((i,j+1))
                     self.adj[(i,j+1)].append((i,j))
+
+        self.search_distances()
+        
+    def search_distances(self):
+        # 幅優先探索で区画の距離を測定
+        q = Queue()
+        q.put((self.i0, 0))
+        visited = [[False]*self.W for _ in range(self.H)]
+        visited[self.i0][0] = True
+        self.places = {1: [(self.i0, 0)]}
+        self.distances = {(self.i0, 0): 1}
+        while True:
+            i1, j1 = q.get()
+            for i2, j2 in self.adj[(i1, j1)]:
+                if not visited[i2][j2]:
+                    dist = self.distances[(i1,j1)]+1
+                    self.distances[(i2,j2)] = dist
+                    visited[i2][j2] = True
+                    q.put((i2, j2))
+                    if dist in self.places.keys():
+                        self.places[dist].append((i2,j2))
+                    else:
+                        self.places[dist] = [(i2,j2)]
+            if q.empty():
+                break
 
     def set_filepath(self, in_filename, out_filename):
         self.in_file = open(in_filename, 'r')
@@ -110,6 +139,19 @@ class Solver:
     def make_plan(self):
         # 計画作成
         self.plan = []
+        dist_keys = sorted(self.places.keys(), reverse=True)
+        i = 0
+        for dist in dist_keys:
+            for p in self.places[dist]:
+                self.plan.append(Plan(self.KSD[i][0], p[0], p[1], 1))
+                # if not self.is_valid_plan(self.plan):
+                #     print(f'{i}: {self.KSD[i][0]}, {p[0]}, {p[1]}, 1 is not valid')
+                i += 1
+                if i >= self.K:
+                    break
+            if i >= self.K:
+                break
+        '''
         for k in range(min(self.K, 20)):
             found = False
             for i in range(self.H):
@@ -122,6 +164,7 @@ class Solver:
                         break
                 if found:
                     break
+        '''
 
     def print(self, s):
         if self.out_file is None:
