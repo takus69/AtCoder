@@ -35,6 +35,7 @@ class Solver:
         for i in range(self.K):
             self.KSD.append((i, self.S[i], self.D[i]))
         self.KSD = sorted(self.KSD, key=lambda x:x[2]-x[1], reverse=True)
+        self.KSD = sorted(self.KSD[:self.H*self.W], key=lambda x:x[2], reverse=True)
 
         # 水路を考慮した移動可能な経路作成
         self.adj = {}
