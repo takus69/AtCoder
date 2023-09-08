@@ -34,8 +34,8 @@ class Solver:
         self.KSD = []
         for i in range(self.K):
             self.KSD.append((i, self.S[i], self.D[i]))
-        self.KSD = sorted(self.KSD, key=lambda x:x[2]-x[1], reverse=True)
-        self.KSD = sorted(self.KSD[:self.H*self.W], key=lambda x:x[2], reverse=True)
+        # self.KSD = sorted(self.KSD, key=lambda x:x[2]-x[1], reverse=True)
+        # self.KSD = sorted(self.KSD[:self.H*self.W], key=lambda x:x[2], reverse=True)
 
         # 水路を考慮した移動可能な経路作成
         self.adj = {}
@@ -141,7 +141,28 @@ class Solver:
         # 計画作成
         self.plan = []
         dist_keys = sorted(self.places.keys(), reverse=True)
-        i = 0
+        # i = 0
+        for i in range(5):
+            start = 20*i+1
+            end = 20*(i+1)
+            # KSDから対象のみを絞り込む
+            tmp_KSD = []
+            for k, s, d in self.KSD:
+                if s >= start and d <= end:
+                    tmp_KSD.append((k, s, d))
+            tmp_KSD = sorted(tmp_KSD, key=lambda x: x[2]-x[1], reverse=True)
+            tmp_KSD = sorted(tmp_KSD[:self.H*self.W], key=lambda x:x[2], reverse=True)
+            tmp_k = len(tmp_KSD)
+            j = 0
+            for dist in dist_keys:
+                if j >= tmp_k:
+                    break
+                for p in self.places[dist]:
+                    if j >= tmp_k:
+                        break
+                    self.plan.append(Plan(tmp_KSD[j][0], p[0], p[1], start))
+                    j += 1
+        '''
         for dist in dist_keys:
             for p in self.places[dist]:
                 self.plan.append(Plan(self.KSD[i][0], p[0], p[1], 1))
@@ -152,7 +173,6 @@ class Solver:
                     break
             if i >= self.K:
                 break
-        '''
         for k in range(min(self.K, 20)):
             found = False
             for i in range(self.H):
