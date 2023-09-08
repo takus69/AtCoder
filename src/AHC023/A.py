@@ -140,52 +140,35 @@ class Solver:
     def make_plan(self):
         # 計画作成
         self.plan = []
-        dist_keys = sorted(self.places.keys(), reverse=True)
+        self.dist_keys = sorted(self.places.keys(), reverse=True)
         # i = 0
         for i in range(5):
             start = 20*i+1
             end = 20*(i+1)
-            # KSDから対象のみを絞り込む
-            tmp_KSD = []
-            for k, s, d in self.KSD:
-                if s >= start and d <= end:
-                    tmp_KSD.append((k, s, d))
-            tmp_KSD = sorted(tmp_KSD, key=lambda x: x[2]-x[1], reverse=True)
-            tmp_KSD = sorted(tmp_KSD[:self.H*self.W], key=lambda x:x[2], reverse=True)
-            tmp_k = len(tmp_KSD)
-            j = 0
-            for dist in dist_keys:
+            plan, cnt = self.make_plan_part(start, end)
+            self.plan += plan
+
+    def make_plan_part(self, start, end):
+        plan = []
+        # KSDから対象のみを絞り込む
+        tmp_KSD = []
+        for k, s, d in self.KSD:
+            if s >= start and d <= end:
+                tmp_KSD.append((k, s, d))
+        tmp_KSD = sorted(tmp_KSD, key=lambda x: x[2]-x[1], reverse=True)
+        tmp_KSD = sorted(tmp_KSD[:self.H*self.W], key=lambda x:x[2], reverse=True)
+        tmp_k = len(tmp_KSD)
+        j = 0
+        for dist in self.dist_keys:
+            if j >= tmp_k:
+                break
+            for p in self.places[dist]:
                 if j >= tmp_k:
                     break
-                for p in self.places[dist]:
-                    if j >= tmp_k:
-                        break
-                    self.plan.append(Plan(tmp_KSD[j][0], p[0], p[1], start))
-                    j += 1
-        '''
-        for dist in dist_keys:
-            for p in self.places[dist]:
-                self.plan.append(Plan(self.KSD[i][0], p[0], p[1], 1))
-                # if not self.is_valid_plan(self.plan):
-                #     print(f'{i}: {self.KSD[i][0]}, {p[0]}, {p[1]}, 1 is not valid')
-                i += 1
-                if i >= self.K:
-                    break
-            if i >= self.K:
-                break
-        for k in range(min(self.K, 20)):
-            found = False
-            for i in range(self.H):
-                for j in range(self.W):
-                    self.plan.append(Plan(k, i, j, self.S[k]))
-                    if not self.is_valid_plan(self.plan):
-                        self.plan.pop()
-                    else:
-                        found = True
-                        break
-                if found:
-                    break
-        '''
+                plan.append(Plan(tmp_KSD[j][0], p[0], p[1], start))
+                j += 1
+        return plan, j
+        
 
     def print(self, s):
         if self.out_file is None:
