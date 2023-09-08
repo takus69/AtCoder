@@ -141,14 +141,21 @@ class Solver:
         # 計画作成
         self.plan = []
         self.dist_keys = sorted(self.places.keys(), reverse=True)
-        # i = 0
-        for i in range(5):
-            start = 20*i+1
-            end = 20*(i+1)
-            plan, cnt = self.make_plan_part(start, end)
-            self.plan += plan
 
-    def make_plan_part(self, start, end):
+        # 全体
+        # plan, cnt1 = self.make_plan_part(1, self.T, target_cnt=30)
+        # self.plan += plan
+        # print('全体', len(plan), cnt1)
+
+        # 5分割
+        for i in range(4):
+            start = 25*i+1
+            end = 25*(i+1)
+            plan, cnt2 = self.make_plan_part(start, end)
+            self.plan += plan
+            # print('5分割', i+1, len(plan), cnt2)
+
+    def make_plan_part(self, start, end, key_start=0, target_cnt=20*20):
         plan = []
         # KSDから対象のみを絞り込む
         tmp_KSD = []
@@ -156,17 +163,23 @@ class Solver:
             if s >= start and d <= end:
                 tmp_KSD.append((k, s, d))
         tmp_KSD = sorted(tmp_KSD, key=lambda x: x[2]-x[1], reverse=True)
-        tmp_KSD = sorted(tmp_KSD[:self.H*self.W], key=lambda x:x[2], reverse=True)
+        tmp_KSD = sorted(tmp_KSD[:target_cnt], key=lambda x:x[2], reverse=True)
         tmp_k = len(tmp_KSD)
         j = 0
+        cnt = 0
         for dist in self.dist_keys:
             if j >= tmp_k:
                 break
             for p in self.places[dist]:
+                cnt += 1
+                if cnt <= key_start:
+                    continue
                 if j >= tmp_k:
                     break
                 plan.append(Plan(tmp_KSD[j][0], p[0], p[1], start))
                 j += 1
+            if cnt <= key_start:
+                continue
         return plan, j
         
 
