@@ -148,19 +148,22 @@ class Solver:
         # print('全体', len(plan), cnt1)
 
         # 5分割
-        for i in range(4):
-            start = 25*i+1
-            end = 25*(i+1)
-            # KSDから対象のみを絞り込む
+        split = 4
+        key_start = 0
+        left_cnt = self.H * self.W
+        for i in range(split):
+            ran = self.T // split
+            split1 = ran*i
+            split2 = ran*(i+1)
+
+            # 手前を先に処理
             tmp_KSD = []
             for k, s, d in self.KSD:
-                if s >= start and d <= end:
+                if s > split1 and d <= split2:
                     tmp_KSD.append((k, s, d))
-            tmp_KSD = sorted(tmp_KSD, key=lambda x: x[2]-x[1], reverse=True)
-            tmp_KSD = sorted(tmp_KSD, key=lambda x:x[2], reverse=True)
-            plan, cnt2 = self.make_plan_part(start, end, tmp_KSD)
+            plan, cnt = self.make_plan_part(split1, split2, tmp_KSD, key_start, left_cnt)
             self.plan += plan
-            # print('5分割', i+1, len(plan), cnt2)
+            # print('手前で処理:', i, cnt)
 
     def make_plan_part(self, start, end, KSD, key_start=0, target_cnt=20*20):
         plan = []
