@@ -151,37 +151,39 @@ class Solver:
         for i in range(4):
             start = 25*i+1
             end = 25*(i+1)
-            plan, cnt2 = self.make_plan_part(start, end)
+            # KSDから対象のみを絞り込む
+            tmp_KSD = []
+            for k, s, d in self.KSD:
+                if s >= start and d <= end:
+                    tmp_KSD.append((k, s, d))
+            tmp_KSD = sorted(tmp_KSD, key=lambda x: x[2]-x[1], reverse=True)
+            tmp_KSD = sorted(tmp_KSD, key=lambda x:x[2], reverse=True)
+            plan, cnt2 = self.make_plan_part(start, end, tmp_KSD)
             self.plan += plan
             # print('5分割', i+1, len(plan), cnt2)
 
-    def make_plan_part(self, start, end, key_start=0, target_cnt=20*20):
+    def make_plan_part(self, start, end, KSD, key_start=0, target_cnt=20*20):
         plan = []
         # KSDから対象のみを絞り込む
-        tmp_KSD = []
-        for k, s, d in self.KSD:
-            if s >= start and d <= end:
-                tmp_KSD.append((k, s, d))
-        tmp_KSD = sorted(tmp_KSD, key=lambda x: x[2]-x[1], reverse=True)
-        tmp_KSD = sorted(tmp_KSD[:target_cnt], key=lambda x:x[2], reverse=True)
-        tmp_k = len(tmp_KSD)
+        KSD = sorted(KSD, key=lambda x: x[2]-x[1], reverse=True)
+        KSD = sorted(KSD[:target_cnt], key=lambda x:x[2], reverse=True)
+        len_ksd = len(KSD)
         j = 0
         cnt = 0
         for dist in self.dist_keys:
-            if j >= tmp_k:
+            if j >= len_ksd:
                 break
             for p in self.places[dist]:
                 cnt += 1
                 if cnt <= key_start:
                     continue
-                if j >= tmp_k:
+                if j >= len_ksd:
                     break
-                plan.append(Plan(tmp_KSD[j][0], p[0], p[1], start))
+                plan.append(Plan(KSD[j][0], p[0], p[1], start))
                 j += 1
             if cnt <= key_start:
                 continue
         return plan, j
-        
 
     def print(self, s):
         if self.out_file is None:
