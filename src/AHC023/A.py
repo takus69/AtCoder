@@ -153,7 +153,7 @@ class Solver:
         left_cnt = self.H * self.W
         for i in range(split):
             ran = self.T // split
-            split1 = ran*i
+            split1 = ran*i+1
             split2 = ran*(i+1)
 
             # 手前を先に処理
