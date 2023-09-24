@@ -18,9 +18,6 @@ def output(d, output_file):
 
 
 if __name__ == '__main__':
-    n, m, c = fetch_input('sample.txt')
-    d = solver(n, m, c)
-    output(d, 'sample_out.txt')
 
     n, m, c = fetch_input('seed0.txt')
     d = solver(n, m, c)
