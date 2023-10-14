@@ -6,10 +6,9 @@ random.seed(0)
 class Solver:
     def __init__(self):
         # 初期設定
-        self.N, self.D, self.Q = map(int, input().split())
+        self.N, self.D, self.Q = map(int, self.input().split())
         self.ans = [d for d in range(self.D)]
         self.ans += [random.randint(0, self.D-1) for _ in range(self.D, self.N)]
-        print('#C', ' '.join(map(str, self.ans)))
         self.q_cnt = 0  # クエリの回数
 
     # 関数定義
@@ -29,16 +28,16 @@ class Solver:
             elif d == dr:
                 nr += 1
                 r.append(i)
-        print(' '.join(map(str, [nl, nr] + l + r)))
-        q = input()
-        print('# {} {} {}'.format(dl, q, dr))
+        self.print(' '.join(map(str, [nl, nr] + l + r)))
+        q = self.input()
+        self.print('# {} {} {}'.format(dl, q, dr))
         self.q_cnt += 1
         return q
 
     def measure_n(self, i1, i2):
-        print('1 1 {} {}'.format(i1, i2))
-        q = input()
-        print('# {} {} {}'.format(i1, q, i2))
+        self.print('1 1 {} {}'.format(i1, i2))
+        q = self.input()
+        self.print('# {} {} {}'.format(i1, q, i2))
         self.q_cnt += 1
         return q
 
@@ -49,6 +48,7 @@ class Solver:
         self.ans[i2] = d1
 
     def solve(self):
+        self.print('#c ' + ' '.join(map(str, self.ans)))
         while self.q_cnt < self.Q:
             # Dの集合の比較
             dl = random.randint(0, self.D-1)
@@ -74,9 +74,18 @@ class Solver:
             q_n = self.measure_n(nl, nr)
             if q_d == q_n:
                 self.switch(nl, nr)
-            print('#C', ' '.join(map(str, self.ans)))
+            self.print('#c ' + ' '.join(map(str, self.ans)))
 
-        print(' '.join(map(str, self.ans)))
+        self.submission()
+
+    def input(self):
+        return input()
+
+    def print(self, s):
+        print(s)
+    
+    def submission(self):
+        self.print(' '.join(map(str, self.ans)))
 
 
 if __name__ == '__main__':
