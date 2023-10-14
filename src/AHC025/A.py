@@ -7,8 +7,13 @@ class Solver:
     def __init__(self):
         # 初期設定
         self.N, self.D, self.Q = map(int, self.input().split())
-        self.ans = [d for d in range(self.D)]
-        self.ans += [random.randint(0, self.D-1) for _ in range(self.D, self.N)]
+        self.ans = []
+        for d in range(self.D):
+            self.ans += [d] * (self.N//self.D)
+        self.ans += [d for d in range(self.D)]
+        self.ans = self.ans[:self.N]
+        # self.ans = [d for d in range(self.D)]
+        # self.ans += [random.randint(0, self.D-1) for _ in range(self.D, self.N)]
         self.q_cnt = 0  # クエリの回数
 
     # 関数定義
