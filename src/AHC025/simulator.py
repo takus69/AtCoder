@@ -23,5 +23,3 @@ if __name__ == '__main__':
         scores.append(score)
     print('{} ± {}'.format(format(np.mean(scores), ','), np.std(scores)))
     print('予測スコア: {}'.format(format(np.sum(scores), ',')))
-
-

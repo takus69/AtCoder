@@ -14,6 +14,7 @@ class Solver:
         self.ans += [d for d in range(self.D)]
         self.ans = self.ans[:self.N]
         self.q_cnt = 0  # クエリの回数
+        self.measure = {}
 
     # 関数定義
     def measure_d(self, dl, dr):
@@ -32,17 +33,27 @@ class Solver:
             elif d == dr:
                 nr += 1
                 r.append(i)
-        self.print(' '.join(map(str, [nl, nr] + l + r)))
-        q = self.input()
+        query = ' '.join(map(str, [nl, nr] + l + r))
+        if query in self.measure.keys():
+            q = self.measure[query]
+        else:
+            self.print(query)
+            q = self.input()
+            self.measure[query] = q
+            self.q_cnt += 1
         self.print('# {} {} {}'.format(dl, q, dr))
-        self.q_cnt += 1
         return q
 
     def measure_n(self, i1, i2):
-        self.print('1 1 {} {}'.format(i1, i2))
-        q = self.input()
+        query = '1 1 {} {}'.format(i1, i2)
+        if query in self.measure.keys():
+            q = self.measure[query]
+        else:
+            self.print(query)
+            q = self.input()
+            self.measure[query] = q
+            self.q_cnt += 1
         self.print('# {} {} {}'.format(i1, q, i2))
-        self.q_cnt += 1
         return q
 
     def swap(self, i1, i2):
@@ -107,6 +118,8 @@ class Solver:
             if q_d2 == '=':
                 continue
             elif q_d != q_d2:
+                if random.random() < 0.1 and self.q_cnt < self.Q / 2:
+                    continue
                 # 大小が変わる場合は元に戻す
                 if swap_flag:
                     self.swap(nl, nr)
