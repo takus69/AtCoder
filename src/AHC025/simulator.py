@@ -8,6 +8,8 @@ def run(in_file, out_file):
     solver = MockSolver(in_file, out_file)
     solver.solve()
     score = solver.evaluate()
+    if solver.q_cnt > solver.Q:
+        print('クエリ回数オーバー: {}'.format(in_file))
     return score
 
 

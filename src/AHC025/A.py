@@ -12,8 +12,6 @@ class Solver:
             self.ans += [d] * (self.N//self.D)
         self.ans += [d for d in range(self.D)]
         self.ans = self.ans[:self.N]
-        # self.ans = [d for d in range(self.D)]
-        # self.ans += [random.randint(0, self.D-1) for _ in range(self.D, self.N)]
         self.q_cnt = 0  # クエリの回数
 
     # 関数定義
@@ -46,7 +44,7 @@ class Solver:
         self.q_cnt += 1
         return q
 
-    def switch(self, i1, i2):
+    def swap(self, i1, i2):
         d1 = self.ans[i1]
         d2 = self.ans[i2]
         self.ans[i1] = d2
@@ -78,8 +76,19 @@ class Solver:
             nr = random.choice(dr_n)
             q_n = self.measure_n(nl, nr)
             if q_d == q_n:
-                self.switch(nl, nr)
+                self.swap(nl, nr)
+            # swap後の大小確認
+            if self.q_cnt >= self.Q:
+                # 後続処理が出来ないため元に戻す
+                self.swap(nl, nr)
+                break
+            q_d2 = self.measure_d(dl, dr)
             self.print('#c ' + ' '.join(map(str, self.ans)))
+            if q_d2 == '=':
+                continue
+            elif q_d != q_d2:
+                # 大小が変わる場合は元に戻す
+                self.swap(nl, nr)
 
         self.submission()
 
