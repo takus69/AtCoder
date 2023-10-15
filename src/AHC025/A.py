@@ -41,7 +41,7 @@ class Solver:
             q = self.input()
             self.measure[query] = q
             self.q_cnt += 1
-        self.print('# {} {} {}'.format(dl, q, dr))
+        self.print('#d {} {} {}'.format(dl, q, dr))
         return q
 
     def measure_n(self, i1, i2):
@@ -53,7 +53,7 @@ class Solver:
             q = self.input()
             self.measure[query] = q
             self.q_cnt += 1
-        self.print('# {} {} {}'.format(i1, q, i2))
+        self.print('#n {} {} {}'.format(i1, q, i2))
         return q
 
     def swap(self, i1, i2):
@@ -100,7 +100,8 @@ class Solver:
                 # swap後の大小確認
                 if self.q_cnt >= self.Q:
                     # 後続処理が出来ないため元に戻す
-                    self.swap(nl, nr)
+                    if q_d == q_n:
+                        self.swap(nl, nr)
                     break
             else:
                 # 移動のパターン
@@ -118,6 +119,7 @@ class Solver:
             if q_d2 == '=':
                 continue
             elif q_d != q_d2:
+                # 確率で元に戻さない
                 if random.random() < 0.1 and self.q_cnt < self.Q / 2:
                     continue
                 # 大小が変わる場合は元に戻す
