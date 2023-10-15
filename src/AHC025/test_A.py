@@ -3,6 +3,18 @@ from A import Solver
 import numpy as np
 
 
+class TestA(unittest.TestCase):
+    def test_w2d(self):
+        solver = MockSolver('testcases/0001.txt', 'testcases/0001_out.txt')
+        solver.solve()
+        score1 = solver.evaluate()
+        print(' '.join(map(str, solver.ans)))
+        solver.w2d(solver.W)
+        score2 = solver.evaluate()
+        print(' '.join(map(str, solver.ans)))
+        print(format(score1, ','), format(score2, ','))
+
+
 class MockSolver(Solver):
     def __init__(self, in_file, out_file):
         self.out = None

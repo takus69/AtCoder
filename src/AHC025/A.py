@@ -1,4 +1,5 @@
 import random
+import numpy as np
 
 
 random.seed(0)
@@ -91,6 +92,35 @@ class Solver:
                 self.swap(nl, nr)
 
         self.submission()
+    
+    def w2d(self, W):
+        Dw = [0 for _ in range(self.D)]
+        w_i = np.argsort(W)[::-1]
+        W_mean = np.mean(W) * self.N / self.D
+        d_i = 0
+        d_diff = 1
+        ans = [-1 for _ in range(self.N)]
+        cnt = 0
+        cnt2 = 0
+        while cnt < self.N:
+            i = w_i[cnt]
+            if Dw[d_i] < W_mean or cnt2 == self.D:
+                ans[i] = d_i
+                Dw[d_i] += W[i]
+                d_i += d_diff
+                cnt += 1
+                if cnt2 < self.D:
+                    cnt2 = 0
+            else:
+                d_i += d_diff
+                cnt2 += 1
+            if d_i >= self.D:
+                d_diff = -1
+                d_i += d_diff
+            elif d_i < 0:
+                d_diff = 1
+                d_i += d_diff
+        self.ans = ans
 
     def input(self):
         return input()
