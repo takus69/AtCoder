@@ -50,6 +50,9 @@ class Solver:
         d2 = self.ans[i2]
         self.ans[i1] = d2
         self.ans[i2] = d1
+    
+    def move(self, i, d):
+        self.ans[i] = d
 
     def solve(self):
         self.print('#c ' + ' '.join(map(str, self.ans)))
@@ -75,21 +78,43 @@ class Solver:
                     dr_n.append(j)
             nl = random.choice(dl_n)
             nr = random.choice(dr_n)
-            q_n = self.measure_n(nl, nr)
-            if q_d == q_n:
-                self.swap(nl, nr)
-            # swap後の大小確認
-            if self.q_cnt >= self.Q:
-                # 後続処理が出来ないため元に戻す
-                self.swap(nl, nr)
-                break
+            # 交換か移動する
+            swap_flag = True
+            if random.random() < 0.7:
+                swap_flag = True
+                # 交換のパターン
+                q_n = self.measure_n(nl, nr)
+                if q_d == q_n:
+                    self.swap(nl, nr)
+                # swap後の大小確認
+                if self.q_cnt >= self.Q:
+                    # 後続処理が出来ないため元に戻す
+                    self.swap(nl, nr)
+                    break
+            else:
+                # 移動のパターン
+                swap_flag = False
+                if q_d == '>':
+                    if len(dl_n) == 1:
+                        continue
+                    self.move(nl, dr)
+                elif q_d == '<':
+                    if len(dr_n) == 1:
+                        continue
+                    self.move(nr, dl)
             q_d2 = self.measure_d(dl, dr)
             self.print('#c ' + ' '.join(map(str, self.ans)))
             if q_d2 == '=':
                 continue
             elif q_d != q_d2:
                 # 大小が変わる場合は元に戻す
-                self.swap(nl, nr)
+                if swap_flag:
+                    self.swap(nl, nr)
+                else:
+                    if q_d == '>':
+                        self.move(nl, dl)
+                    elif q_d == '<':
+                        self.move(nr, dr)
 
         self.submission()
     
