@@ -120,8 +120,8 @@ class Solver:
                 continue
             elif q_d != q_d2:
                 # 確率で元に戻さない
-                if random.random() < 0.1 and self.q_cnt < self.Q / 2:
-                    continue
+                #if random.random() < 0.1 and self.q_cnt < self.Q / 2:
+                #    continue
                 # 大小が変わる場合は元に戻す
                 if swap_flag:
                     self.swap(nl, nr)
@@ -175,4 +175,3 @@ class Solver:
 if __name__ == '__main__':
     solver = Solver()
     solver.solve()
-
