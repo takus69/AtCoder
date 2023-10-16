@@ -15,7 +15,10 @@ class Solver:
         self.ans = self.ans[:self.N]
         self.q_cnt = 0  # クエリの回数
         self.measure = {}
-
+        self.bigger_cnt = {i: 0 for i in range(self.N)}
+        self.smaller_cnt = {i: 0 for i in range(self.N)}
+        self.query = ''
+    
     # 関数定義
     def measure_d(self, dl, dr):
         '''
@@ -162,14 +165,34 @@ class Solver:
                 d_i += d_diff
         self.ans = ans
 
+    def post_input(self, out):
+        if self.query.startswith('1 1 '):
+            tmp = list(map(int, self.query.split()))
+            nl, nr = tmp[2], tmp[3]
+            if out == '>':
+                self.bigger_cnt[nl] += 1
+                self.smaller_cnt[nr] += 1
+            elif out == '<':
+                self.bigger_cnt[nr] += 1
+                self.smaller_cnt[nl] += 1
+        self.query = ''
+
     def input(self):
-        return input()
+        ret = input()
+        self.post_input(ret)
+        return ret
+
+    def pre_print(self, s):
+        self.query = s
 
     def print(self, s):
+        self.pre_print(s)
         print(s)
     
     def submission(self):
         self.print(' '.join(map(str, self.ans)))
+        self.print('# bigger: {}'.format(self.bigger_cnt))
+        self.print('# smaller: {}'.format(self.smaller_cnt))
 
 
 if __name__ == '__main__':

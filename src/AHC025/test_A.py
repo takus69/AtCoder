@@ -18,6 +18,7 @@ class TestA(unittest.TestCase):
 class MockSolver(Solver):
     def __init__(self, in_file, out_file):
         self.out = None
+        self.query = ''
         self.in_file = open(in_file, 'r')
         self.out_file = open(out_file, 'w')
         super().__init__()
@@ -28,9 +29,11 @@ class MockSolver(Solver):
         if ret is None:
             ret = self.in_file.readline()
         self.out = None
+        self.post_input(ret)
         return ret
     
     def print(self, s):
+        self.pre_print(s)
         # 出力を設定
         if not s.startswith('#'):
             tmp = list(map(int, s.split(' ')))
