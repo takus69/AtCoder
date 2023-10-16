@@ -1,5 +1,6 @@
 import random
 import numpy as np
+import copy
 
 
 random.seed(0)
@@ -90,11 +91,32 @@ class Solver:
                     dl_n.append(j)
                 elif self.ans[j] == dr:
                     dr_n.append(j)
+            # D個の大の要素の平準化
+            swap_flag2 = False
+            '''
+            dl_n_big, dl_n_small = self.bigger_D(dl_n)
+            dr_n_big, dr_n_small = self.bigger_D(dr_n)
+            if q_d == '>':
+                if len(dl_n_big) > self.bigger_rate and len(dr_n_small) > 0:
+                    dl_n = copy.copy(dl_n_big)
+                    dr_n = copy.copy(dr_n_small)
+                    swap_flag2 = True
+            elif q_d == '<':
+                if len(dr_n_big) > self.bigger_rate and len(dl_n_small) > 0:
+                    dl_n = copy.copy(dl_n_small)
+                    dr_n = copy.copy(dr_n_big)
+                    swap_flag2 = True
+            if not swap_flag2:
+                if len(dl_n_small) > 0:
+                    dl_n = copy.copy(dl_n_small)
+                if len(dr_n_small) > 0:
+                    dr_n = copy.copy(dr_n_small)
+            '''
             nl = random.choice(dl_n)
             nr = random.choice(dr_n)
             # 交換か移動する
             swap_flag = True
-            if random.random() < 0.7:
+            if random.random() < 0.7 or swap_flag2:
                 swap_flag = True
                 # 交換のパターン
                 q_n = self.measure_n(nl, nr)
@@ -125,8 +147,8 @@ class Solver:
                 # 確率で元に戻さない
                 #if random.random() < 0.1 and self.q_cnt < self.Q / 2:
                 #    continue
-                # 大小が変わる場合は元に戻す
-                if swap_flag:
+                # 大小が変わる場合は元に戻す。ただし平準化の場合は戻さない
+                if swap_flag and not swap_flag2:
                     self.swap(nl, nr)
                 else:
                     if q_d == '>':
@@ -164,6 +186,20 @@ class Solver:
                 d_diff = 1
                 d_i += d_diff
         self.ans = ans
+
+    def bigger_D(self, d_n):
+        diff = {}
+        bigger, smaller = [], []
+        for i in range(self.N):
+            diff[i] = self.bigger_cnt[i] - self.smaller_cnt[i]
+        diff = sorted(diff.items(), key=lambda x: x[1], reverse=True)[:self.D]
+        check = set(k for k, v in diff)
+        for i in d_n:
+            if i in check:
+                bigger.append(i)
+            else:
+                smaller.append(i)
+        return bigger, smaller
 
     def post_input(self, out):
         if self.query.startswith('1 1 '):
