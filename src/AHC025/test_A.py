@@ -71,10 +71,12 @@ class MockSolver(Solver):
 
 
 if __name__ == '__main__':
-    solver = MockSolver('testcases/0094.txt', 'testcases/0094_out.txt')
+    solver = MockSolver('testcases/0017.txt', 'testcases/0017_out.txt')
     solver.solve()
     score = solver.evaluate()
     print('実スコア:', format(score, ','))
     print('予測スコア:', format(solver.estimate_score(), ','))
-    print('実W:', solver.W)
-    print('予測W:', solver.estimate_w)
+    # print('実W:', solver.W)
+    # print('予測W:', solver.estimate_w)
+    print('# measure_d_cnt: {}, measure_n_cnt: {}'.format(solver.measure_d_cnt, solver.measure_n_cnt))
+    print('# measure_d_input_cnt: {}, measure_n_input_cnt: {}'.format(solver.measure_d_input_cnt, solver.measure_n_input_cnt))

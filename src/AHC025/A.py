@@ -12,6 +12,8 @@ class Solver:
         # 初期設定
         self.measure_d_cnt = 0
         self.measure_n_cnt = 0
+        self.measure_d_input_cnt = 0
+        self.measure_n_input_cnt = 0
         self.query = ''
         self.N, self.D, self.Q = map(int, self.input().split())
         self.ans = []
@@ -62,6 +64,7 @@ class Solver:
         if query in self.measure.keys():
             q = self.measure[query]
         else:
+            self.measure_d_input_cnt += 1
             self.print(query)
             q = self.input()
             self.measure[query] = q
@@ -82,6 +85,7 @@ class Solver:
         if query in self.measure.keys():
             q = self.measure[query]
         else:
+            self.measure_n_input_cnt += 1
             self.print(query)
             q = self.input()
             self.measure[query] = q
@@ -103,6 +107,26 @@ class Solver:
     def solve(self):
         start_time = time.time()
         self.print('#c ' + ' '.join(map(str, self.ans)))
+
+        '''
+        # 初期測定
+        i1 = 0
+        ns = []
+        for i2 in random.sample([i for i in range(1, self.N)], k=self.N-1):
+            q = self.measure_n(i1, i2)
+            if q == '<':
+                ns.append(i1)
+                i1 = i2
+            else:
+                ns.append(i2)
+        ns.append(i1)
+        cnt = 0
+        ns.reverse()
+        for i in ns:
+            self.ans[i] = cnt
+            cnt = (cnt+1)%self.D
+        '''
+
         while self.q_cnt < self.Q:
             if time.time() - start_time > 1.5:
                 self.print('1 1 0 1')
@@ -111,9 +135,11 @@ class Solver:
             # pre_score = self.estimate_score()
 
             # Dの集合の比較
-            # dl = random.randint(0, self.D-1)
             min_cnt = min(self.d_diff.values())
-            dl = random.choices([i for i in range(self.D)], weights=[self.d_diff[i] - min_cnt + 1 for i in range(self.D)])[0]
+            #if self.q_cnt * 2 < self.Q:
+            #    dl = random.choices([i for i in range(self.D)], weights=[self.d_diff[i] - min_cnt + 1 for i in range(self.D)])[0]
+            #else:
+            dl = random.randint(0, self.D-1)
             dr = dl
             while dr == dl:
                 dr = random.randint(0, self.D-1)
@@ -159,7 +185,7 @@ class Solver:
             if random.random() < 0.7 or swap_flag2:
                 swap_flag = True
                 # 交換のパターン
-                if nl > nr and False:
+                if nl > nr:
                     q_n = self.measure_n(nr, nl)
                     tmp = ''
                     if q_n == '>':
@@ -186,7 +212,7 @@ class Solver:
                         continue
                     self.move(nr, dl)
             q_d2 = self.measure_d(dl, dr)
-            self.print('#c ' + ' '.join(map(str, self.ans)))
+            # self.print('#c ' + ' '.join(map(str, self.ans)))
             if q_d2 == '=':
                 continue
             elif q_d != q_d2:  # 大小関係が違う場合は戻す
@@ -317,6 +343,7 @@ class Solver:
         self.print('# smaller: {}'.format(self.smaller_cnt))
         self.print('# estimate score: {}'.format(self.estimate_score()))
         self.print('# measure_d_cnt: {}, measure_n_cnt: {}'.format(self.measure_d_cnt, self.measure_n_cnt))
+        self.print('# measure_d_input_cnt: {}, measure_n_input_cnt: {}'.format(self.measure_d_input_cnt, self.measure_n_input_cnt))
 
 
 if __name__ == '__main__':
