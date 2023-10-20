@@ -81,7 +81,7 @@ class Solver:
     def measure_n(self, i1, i2):
         self.measure_n_cnt += 1
         self.print('# measure n {} {}'.format(i1, i2))
-        query = '1 1 {} {}'.format(i1, i2)
+        query = '{} {} {} {}'.format(len(i1), len(i2), ' '.join(map(str, i1)), ' '.join(map(str, i2)))
         if query in self.measure.keys():
             q = self.measure[query]
         else:
@@ -93,16 +93,25 @@ class Solver:
         self.print('#n {} {} {}'.format(i1, q, i2))
         return q
 
-    def swap(self, i1, i2):
+    def swap(self, nl, nr):
+        i1 = nl[0]
+        i2 = nr[0]
         self.print('# swap {} {}'.format(i1, i2))
         d1 = self.ans[i1]
         d2 = self.ans[i2]
         self.ans[i1] = d2
         self.ans[i2] = d1
+        if len(nl) > 1:
+            for i in nl[1:]:
+                self.ans[i] = d2
+        if len(nr) > 1:
+            for i in nr[1:]:
+                self.ans[i] = d1
     
-    def move(self, i, d):
-        self.print('# move {} to {}'.format(i, d))
-        self.ans[i] = d
+    def move(self, ns, d):
+        self.print('# move {} to {}'.format(ns, d))
+        for i in ns:
+            self.ans[i] = d
 
     def solve(self):
         start_time = time.time()
@@ -178,14 +187,25 @@ class Solver:
                 if len(dr_n_small) > 0:
                     dr_n = copy.copy(dr_n_small)
             '''
-            nl = random.choice(dl_n)
-            nr = random.choice(dr_n)
+            lambd = 1.0
+            if q_d == '>':
+                k1 = 1
+                k2 = math.ceil(random.expovariate(lambd=lambd))
+            else:
+                k1 = math.ceil(random.expovariate(lambd=lambd))
+                k2 = 1
+            while len(dl_n) < k1:
+                k1 -= 1
+            while len(dr_n) < k2:
+                k2 -= 1
+            nl = random.sample(dl_n, k=k1)
+            nr = random.sample(dr_n, k=k2)
             # 交換か移動する
             swap_flag = True
             if random.random() < 0.7 or swap_flag2:
                 swap_flag = True
                 # 交換のパターン
-                if nl > nr:
+                if nl > nr and False:
                     q_n = self.measure_n(nr, nl)
                     tmp = ''
                     if q_n == '>':
