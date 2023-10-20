@@ -145,13 +145,15 @@ class Solver:
 
             # Dの集合の比較
             min_cnt = min(self.d_diff.values())
+            max_cnt = max(self.d_diff.values())
             #if self.q_cnt * 2 < self.Q:
-            #    dl = random.choices([i for i in range(self.D)], weights=[self.d_diff[i] - min_cnt + 1 for i in range(self.D)])[0]
+            dl = random.choices([i for i in range(self.D)], weights=[self.d_diff[i] - min_cnt + 1 for i in range(self.D)])[0]
             #else:
-            dl = random.randint(0, self.D-1)
+            #dl = random.randint(0, self.D-1)
             dr = dl
             while dr == dl:
-                dr = random.randint(0, self.D-1)
+                dr = random.choices([i for i in range(self.D)], weights=[max_cnt - self.d_diff[i] + 1 for i in range(self.D)])[0]
+                # dr = random.randint(0, self.D-1)
             q_d = self.measure_d(dl, dr)
             if self.q_cnt >= self.Q:
                 break
@@ -240,7 +242,7 @@ class Solver:
             # self.print('# before:after {}:{}'.format(pre_score, self.estimate_score()))
             #if pre_score < self.estimate_score():
                 # 確率で元に戻さない
-                #if random.random() < 0.1 and self.q_cnt < self.Q / 2:
+                #if random.random() < 0.04 and self.q_cnt < self.Q / 2:
                 #    continue
                 # 大小が変わる場合は元に戻す。ただし平準化の場合は戻さない
                 if swap_flag and not swap_flag2:
