@@ -2,6 +2,7 @@ import random
 import numpy as np
 import copy
 import math
+import time
 
 
 random.seed(0)
@@ -41,6 +42,7 @@ class Solver:
         '''
         D個の集合同士の比較
         '''
+        self.print('# measure d {} {}'.format(dl, dr))
         nl = 0
         nr = 0
         l = []
@@ -71,6 +73,7 @@ class Solver:
         return q
 
     def measure_n(self, i1, i2):
+        self.print('# measure n {} {}'.format(i1, i2))
         query = '1 1 {} {}'.format(i1, i2)
         if query in self.measure.keys():
             q = self.measure[query]
@@ -83,24 +86,30 @@ class Solver:
         return q
 
     def swap(self, i1, i2):
+        self.print('# swap {} {}'.format(i1, i2))
         d1 = self.ans[i1]
         d2 = self.ans[i2]
         self.ans[i1] = d2
         self.ans[i2] = d1
     
     def move(self, i, d):
+        self.print('# move {} to {}'.format(i, d))
         self.ans[i] = d
 
     def solve(self):
+        start_time = time.time()
         self.print('#c ' + ' '.join(map(str, self.ans)))
         while self.q_cnt < self.Q:
+            if time.time() - start_time > 1.5:
+                self.print('1 1 0 1')
+                self.q_cnt += 1
             # 処理前の予測スコア
             # pre_score = self.estimate_score()
 
             # Dの集合の比較
-            # dl = random.randint(0, self.D-1)
+            dl = random.randint(0, self.D-1)
             min_cnt = min(self.d_diff.values())
-            dl = random.choices([i for i in range(self.D)], weights=[self.d_diff[i] - min_cnt + 1 for i in range(self.D)])[0]
+            #dl = random.choices([i for i in range(self.D)], weights=[self.d_diff[i] - min_cnt + 1 for i in range(self.D)])[0]
             dr = dl
             while dr == dl:
                 dr = random.randint(0, self.D-1)
@@ -146,15 +155,19 @@ class Solver:
             if random.random() < 0.7 or swap_flag2:
                 swap_flag = True
                 # 交換のパターン
-                q_n = self.measure_n(nl, nr)
+                if nl > nr and False:
+                    q_n = self.measure_n(nr, nl)
+                    if q_n == '>':
+                        q_n == '<'
+                    elif q_n == '<':
+                        q_n == '>'
+                else:
+                    q_n = self.measure_n(nl, nr)
+                # 後続処理が出来ないためswap前に終了
+                if self.q_cnt >= self.Q:
+                    break
                 if q_d == q_n:
                     self.swap(nl, nr)
-                # swap後の大小確認
-                if self.q_cnt >= self.Q:
-                    # 後続処理が出来ないため元に戻す
-                    if q_d == q_n:
-                        self.swap(nl, nr)
-                    break
             else:
                 # 移動のパターン
                 swap_flag = False

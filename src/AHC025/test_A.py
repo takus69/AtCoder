@@ -71,7 +71,7 @@ class MockSolver(Solver):
 
 
 if __name__ == '__main__':
-    solver = MockSolver('testcases/0000.txt', 'testcases/0000_out.txt')
+    solver = MockSolver('testcases/0094.txt', 'testcases/0094_out.txt')
     solver.solve()
     score = solver.evaluate()
     print('実スコア:', format(score, ','))
