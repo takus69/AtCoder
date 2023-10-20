@@ -111,9 +111,9 @@ class Solver:
             # pre_score = self.estimate_score()
 
             # Dの集合の比較
-            dl = random.randint(0, self.D-1)
+            # dl = random.randint(0, self.D-1)
             min_cnt = min(self.d_diff.values())
-            #dl = random.choices([i for i in range(self.D)], weights=[self.d_diff[i] - min_cnt + 1 for i in range(self.D)])[0]
+            dl = random.choices([i for i in range(self.D)], weights=[self.d_diff[i] - min_cnt + 1 for i in range(self.D)])[0]
             dr = dl
             while dr == dl:
                 dr = random.randint(0, self.D-1)
@@ -159,7 +159,7 @@ class Solver:
             if random.random() < 0.7 or swap_flag2:
                 swap_flag = True
                 # 交換のパターン
-                if nl > nr:
+                if nl > nr and False:
                     q_n = self.measure_n(nr, nl)
                     tmp = ''
                     if q_n == '>':
@@ -167,7 +167,6 @@ class Solver:
                     elif q_n == '<':
                         tmp == '>'
                     q_n = tmp
-                    self.print('# debug {} {} {}'.format(nl, q_n, nr))
                 else:
                     q_n = self.measure_n(nl, nr)
                 # 後続処理が出来ないためswap前に終了
