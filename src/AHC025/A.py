@@ -9,6 +9,7 @@ random.seed(0)
 class Solver:
     def __init__(self):
         # 初期設定
+        self.query = ''
         self.N, self.D, self.Q = map(int, self.input().split())
         self.ans = []
         for d in range(self.D):
@@ -19,8 +20,8 @@ class Solver:
         self.measure = {}
         self.bigger_cnt = {i: 0 for i in range(self.N)}
         self.smaller_cnt = {i: 0 for i in range(self.N)}
-        self.query = ''
         self.bigger_rate = 2
+        self.d_diff = {i: 0 for i in range(self.D)}
         self.l = 100000
         self.a = 10**(-10)
         self.calc_w()
@@ -60,6 +61,12 @@ class Solver:
             q = self.input()
             self.measure[query] = q
             self.q_cnt += 1
+            if q == '<':
+                self.d_diff[dr] += 1
+                self.d_diff[dl] -= 1
+            elif q == '>':
+                self.d_diff[dl] += 1
+                self.d_diff[dr] -= 1
         self.print('#d {} {} {}'.format(dl, q, dr))
         return q
 
@@ -88,10 +95,12 @@ class Solver:
         self.print('#c ' + ' '.join(map(str, self.ans)))
         while self.q_cnt < self.Q:
             # 処理前の予測スコア
-            pre_score = self.estimate_score()
+            # pre_score = self.estimate_score()
 
             # Dの集合の比較
-            dl = random.randint(0, self.D-1)
+            # dl = random.randint(0, self.D-1)
+            min_cnt = min(self.d_diff.values())
+            dl = random.choices([i for i in range(self.D)], weights=[self.d_diff[i] - min_cnt + 1 for i in range(self.D)])[0]
             dr = dl
             while dr == dl:
                 dr = random.randint(0, self.D-1)
@@ -157,16 +166,14 @@ class Solver:
                     if len(dr_n) == 1:
                         continue
                     self.move(nr, dl)
-            '''
             q_d2 = self.measure_d(dl, dr)
             self.print('#c ' + ' '.join(map(str, self.ans)))
             if q_d2 == '=':
                 continue
-            elif q_d != q_d2:  # 大小関係が同じ場合に採用
-            '''
+            elif q_d != q_d2:  # 大小関係が違う場合は戻す
             # 予測スコアが改善しない場合は戻す
-            self.print('# before:after {}:{}'.format(pre_score, self.estimate_score()))
-            if pre_score < self.estimate_score():
+            # self.print('# before:after {}:{}'.format(pre_score, self.estimate_score()))
+            #if pre_score < self.estimate_score():
                 # 確率で元に戻さない
                 #if random.random() < 0.1 and self.q_cnt < self.Q / 2:
                 #    continue
