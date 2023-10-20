@@ -10,6 +10,8 @@ random.seed(0)
 class Solver:
     def __init__(self):
         # 初期設定
+        self.measure_d_cnt = 0
+        self.measure_n_cnt = 0
         self.query = ''
         self.N, self.D, self.Q = map(int, self.input().split())
         self.ans = []
@@ -42,6 +44,7 @@ class Solver:
         '''
         D個の集合同士の比較
         '''
+        self.measure_d_cnt += 1
         self.print('# measure d {} {}'.format(dl, dr))
         nl = 0
         nr = 0
@@ -73,6 +76,7 @@ class Solver:
         return q
 
     def measure_n(self, i1, i2):
+        self.measure_n_cnt += 1
         self.print('# measure n {} {}'.format(i1, i2))
         query = '1 1 {} {}'.format(i1, i2)
         if query in self.measure.keys():
@@ -155,12 +159,15 @@ class Solver:
             if random.random() < 0.7 or swap_flag2:
                 swap_flag = True
                 # 交換のパターン
-                if nl > nr and False:
+                if nl > nr:
                     q_n = self.measure_n(nr, nl)
+                    tmp = ''
                     if q_n == '>':
-                        q_n == '<'
+                        tmp == '<'
                     elif q_n == '<':
-                        q_n == '>'
+                        tmp == '>'
+                    q_n = tmp
+                    self.print('# debug {} {} {}'.format(nl, q_n, nr))
                 else:
                     q_n = self.measure_n(nl, nr)
                 # 後続処理が出来ないためswap前に終了
@@ -310,6 +317,7 @@ class Solver:
         self.print('# bigger: {}'.format(self.bigger_cnt))
         self.print('# smaller: {}'.format(self.smaller_cnt))
         self.print('# estimate score: {}'.format(self.estimate_score()))
+        self.print('# measure_d_cnt: {}, measure_n_cnt: {}'.format(self.measure_d_cnt, self.measure_n_cnt))
 
 
 if __name__ == '__main__':
