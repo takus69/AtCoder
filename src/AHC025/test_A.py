@@ -54,7 +54,7 @@ class MockSolver(Solver):
         self.out_file.write(s + '\n')
         if s.startswith('#c'):
             score = self.evaluate()
-            self.out_file.write('# ' + str(score) + '\n')
+            self.out_file.write('# score' + str(score) + ', ' + str(self.estimate_score()) + '\n')
 
     def submission(self):
         super().submission()
@@ -74,4 +74,7 @@ if __name__ == '__main__':
     solver = MockSolver('testcases/0000.txt', 'testcases/0000_out.txt')
     solver.solve()
     score = solver.evaluate()
-    print(score)
+    print('実スコア:', format(score, ','))
+    print('予測スコア:', format(solver.estimate_score(), ','))
+    print('実W:', solver.W)
+    print('予測W:', solver.estimate_w)

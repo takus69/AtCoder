@@ -1,6 +1,7 @@
 import random
 import numpy as np
 import copy
+import math
 
 
 random.seed(0)
@@ -19,8 +20,22 @@ class Solver:
         self.bigger_cnt = {i: 0 for i in range(self.N)}
         self.smaller_cnt = {i: 0 for i in range(self.N)}
         self.query = ''
+        self.bigger_rate = 2
+        self.l = 100000
+        self.a = 10**(-10)
+        self.calc_w()
     
     # 関数定義
+    def calc_w(self):
+        self.order_w = []
+        pre = self.l
+        for i in range(self.N):
+            y = (i+1) / self.N
+            x = -math.log(1-y+self.a)*self.l
+            cal = (self.l + x) * math.exp(-x/self.l)
+            self.order_w.append((pre-cal)*self.N)
+            pre = cal
+
     def measure_d(self, dl, dr):
         '''
         D個の集合同士の比較
@@ -72,6 +87,9 @@ class Solver:
     def solve(self):
         self.print('#c ' + ' '.join(map(str, self.ans)))
         while self.q_cnt < self.Q:
+            # 処理前の予測スコア
+            pre_score = self.estimate_score()
+
             # Dの集合の比較
             dl = random.randint(0, self.D-1)
             dr = dl
@@ -139,11 +157,16 @@ class Solver:
                     if len(dr_n) == 1:
                         continue
                     self.move(nr, dl)
+            '''
             q_d2 = self.measure_d(dl, dr)
             self.print('#c ' + ' '.join(map(str, self.ans)))
             if q_d2 == '=':
                 continue
-            elif q_d != q_d2:
+            elif q_d != q_d2:  # 大小関係が同じ場合に採用
+            '''
+            # 予測スコアが改善しない場合は戻す
+            self.print('# before:after {}:{}'.format(pre_score, self.estimate_score()))
+            if pre_score < self.estimate_score():
                 # 確率で元に戻さない
                 #if random.random() < 0.1 and self.q_cnt < self.Q / 2:
                 #    continue
@@ -155,6 +178,7 @@ class Solver:
                         self.move(nl, dl)
                     elif q_d == '<':
                         self.move(nr, dr)
+            self.print('#c ' + ' '.join(map(str, self.ans)))
 
         self.submission()
     
@@ -187,12 +211,48 @@ class Solver:
                 d_i += d_diff
         self.ans = ans
 
-    def bigger_D(self, d_n):
+    def estimate_score(self):
+        # wの順位を予測
         diff = {}
         bigger, smaller = [], []
         for i in range(self.N):
             diff[i] = self.bigger_cnt[i] - self.smaller_cnt[i]
-        diff = sorted(diff.items(), key=lambda x: x[1], reverse=True)[:self.D]
+        diff = sorted(diff.items(), key=lambda x: x[1])
+
+        # 順位に対してwを割り当てる
+        self.estimate_w = []
+        pre_v = 0
+        cnt = 0
+        ww = 0
+        for k, v in diff:
+            if pre_v != v:
+                for _ in range(cnt):
+                    self.estimate_w.append(ww/cnt)
+                ww = self.order_w[k]
+                cnt = 1
+                pre_v = v
+            else:
+                ww += self.order_w[k]
+                cnt += 1
+        for _ in range(cnt):
+            self.estimate_w.append(ww/cnt)
+
+        # 割り当てたwに対してスコアを算出
+        Dw = [0 for _ in range(self.D)]
+        for i in range(self.N):
+            Dw[self.ans[i]] += self.estimate_w[i]
+        score = 1 + round(np.std(Dw) * 100)
+        return score
+
+    def bigger_D(self, d_n):
+        '''
+        大きい方からD*bigger_rate個の配列を返却。残りの配列も返却
+        '''
+        diff = {}
+        bigger, smaller = [], []
+        for i in range(self.N):
+            diff[i] = self.bigger_cnt[i] - self.smaller_cnt[i]
+        diff = sorted(diff.items(), key=lambda x: x[1], reverse=True)[:self.D*self.bigger_rate]
         check = set(k for k, v in diff)
         for i in d_n:
             if i in check:
@@ -229,6 +289,7 @@ class Solver:
         self.print(' '.join(map(str, self.ans)))
         self.print('# bigger: {}'.format(self.bigger_cnt))
         self.print('# smaller: {}'.format(self.smaller_cnt))
+        self.print('# estimate score: {}'.format(self.estimate_score()))
 
 
 if __name__ == '__main__':
