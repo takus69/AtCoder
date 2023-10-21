@@ -200,12 +200,13 @@ class Solver:
                 k1 -= 1
             while len(dr_n) < k2:
                 k2 -= 1
+            max_small_cnt = max(self.smaller_cnt.values())
             if q_d == '>':
-                nl = random.choices(dl_n, weights=[self.bigger_cnt[i]+1 for i in dl_n])
+                nl = random.choices(dl_n, weights=[self.bigger_cnt[i]-self.smaller_cnt[i]+max_small_cnt+1 for i in dl_n])
                 nr = random.sample(dr_n, k=k2)
             else:
                 nl = random.sample(dl_n, k=k1)
-                nr = random.choices(dr_n, weights=[self.bigger_cnt[i]+1 for i in dr_n])
+                nr = random.choices(dr_n, weights=[self.bigger_cnt[i]-self.smaller_cnt[i]+max_small_cnt+1 for i in dr_n])
             # 交換か移動する
             swap_flag = True
             if random.random() < 0.7 or swap_flag2:
@@ -348,9 +349,13 @@ class Solver:
                 if nl_cnt == 1:
                     if out == '>':
                         self.bigger_cnt[nl[0]] += 1
+                    elif out == '<':
+                        self.smaller_cnt[nl[0]] -= 1
                 if nr_cnt == 1:
                     if out == '<':
                         self.bigger_cnt[nr[0]] += 1
+                    elif out == '>':
+                        self.smaller_cnt[nr[0]] -= 1
                 self.query = ''
 
     def input(self):
