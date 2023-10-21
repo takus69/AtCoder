@@ -200,8 +200,12 @@ class Solver:
                 k1 -= 1
             while len(dr_n) < k2:
                 k2 -= 1
-            nl = random.sample(dl_n, k=k1)
-            nr = random.sample(dr_n, k=k2)
+            if q_d == '>':
+                nl = random.choices(dl_n, weights=[self.bigger_cnt[i]+1 for i in dl_n])
+                nr = random.sample(dr_n, k=k2)
+            else:
+                nl = random.sample(dl_n, k=k1)
+                nr = random.choices(dr_n, weights=[self.bigger_cnt[i]+1 for i in dr_n])
             # 交換か移動する
             swap_flag = True
             if random.random() < 0.7 or swap_flag2:
@@ -336,16 +340,18 @@ class Solver:
         return bigger, smaller
 
     def post_input(self, out):
-        if self.query.startswith('1 1 '):
+        if self.query != '':
             tmp = list(map(int, self.query.split()))
-            nl, nr = tmp[2], tmp[3]
-            if out == '>':
-                self.bigger_cnt[nl] += 1
-                self.smaller_cnt[nr] += 1
-            elif out == '<':
-                self.bigger_cnt[nr] += 1
-                self.smaller_cnt[nl] += 1
-        self.query = ''
+            if len(tmp) == tmp[0]+tmp[1]+2:
+                nl_cnt, nr_cnt = tmp[0], tmp[1]
+                nl, nr = tmp[2:2+nl_cnt], tmp[2+nl_cnt:]
+                if nl_cnt == 1:
+                    if out == '>':
+                        self.bigger_cnt[nl[0]] += 1
+                if nr_cnt == 1:
+                    if out == '<':
+                        self.bigger_cnt[nr[0]] += 1
+                self.query = ''
 
     def input(self):
         ret = input()
