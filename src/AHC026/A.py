@@ -30,7 +30,11 @@ def make_ans(n, m, b, vi):
             #print('i, j:', i, j)
             v2 = b[i][j+1]
             i2 = i
-            while i == i2:
+            check = []
+            for vv in range(v, min(n, v+m-1)):
+                check.append(vi[vv])
+            while i2 in check:
+            #while i2 == i:
                 i2 = random.randrange(0, m)
             ans.append([v2, i2+1])
             #print(v2, i2+1)
