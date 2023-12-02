@@ -10,6 +10,7 @@ class Solver:
         self.DIJ = [(0, 1), (1, 0), (0, -1), (-1, 0)]
         self.DIR = "RDLU"
         self.now_i, self.now_j = 0, 0
+        self.ans = ''
 
     def init(self):
         self.N = int(input())
@@ -29,12 +30,12 @@ class Solver:
             j2 = j + dj
             if 0 <= i2 < self.N and 0 <= j2 < self.N and not self.visited[i2][j2]:
                 if di == 0 and self.v[i][min(j, j2)] == '0' or dj == 0 and self.h[min(i, i2)][j] == '0':
-                    self.print(self.DIR[dir], end='')
+                    self.ans += self.DIR[dir]
                     self.now_i, self.now_j = i2, j2
                     # print('now', self.now_i, self.now_j)
                     self.go_all(i2, j2)
                     if self.visited_cnt < self.N**2:
-                        self.print(self.DIR[(dir + 2) % 4], end='')
+                        self.ans += self.DIR[(dir + 2) % 4]
                         self.now_i += self.DIJ[(dir + 2) % 4][0]
                         self.now_j += self.DIJ[(dir + 2) % 4][1]
                         # print('now', self.now_i, self.now_j)
@@ -70,11 +71,14 @@ class Solver:
     def solve(self):
         # print('now', self.now_i, self.now_j)
         self.go_all(self.now_i, self.now_j)
-        self.print(self.short_path((self.now_i, self.now_j), (0, 0)), end='')
-        self.print()
+        self.ans += self.short_path((self.now_i, self.now_j), (0, 0))
+        self.submission()
 
-    def print(self, s='', end='\n'):
-        print(s, end=end)
+    def submission(self):
+        print(self.ans)
+
+    def evaluate(self):
+        None
 
 if __name__ == '__main__':
     solver = Solver()

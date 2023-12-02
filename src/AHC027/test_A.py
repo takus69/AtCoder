@@ -8,7 +8,6 @@ class TestA(unittest.TestCase):
         solver.solve()
         score = solver.evaluate()
         print('スコア:', format(score, ','))
-        solver.end()
 
 
 class MockSolver(Solver):
@@ -25,10 +24,8 @@ class MockSolver(Solver):
         self.visited = [[False for _ in range(self.N)] for _ in range(self.N)]
         self.in_file.close()
 
-    def print(self, s='', end='\n'):
-        self.out_file.write(s + end)
-
-    def end(self):
+    def submission(self):
+        self.out_file.write(self.ans)
         self.out_file.close()
 
     def evaluate(self):
@@ -40,5 +37,4 @@ if __name__ == '__main__':
     solver = MockSolver('testcases/0014.txt', 'testcases/0014_out.txt')
     solver.solve()
     score = solver.evaluate()
-    solver.end()
     print('スコア:', format(score, ','))
