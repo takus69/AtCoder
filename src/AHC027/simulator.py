@@ -9,7 +9,6 @@ def run(in_file, out_file):
     solver = MockSolver(in_file, out_file)
     solver.solve()
     score = solver.evaluate()
-    solver.end()
     return score
 
 
@@ -24,11 +23,6 @@ if __name__ == '__main__':
         score = run(in_file, out_file)
         scores.append(score)
         # estimate_scores.append(estimate_score)
-    '''
-    print('実スコア: {} ± {}'.format(format(np.mean(scores), ','), np.std(scores)))
-    print('予測スコア: {} ± {}'.format(format(np.mean(estimate_scores), ','), np.std(estimate_scores)))
-    print('実スコア: {}'.format(format(np.sum(scores), ',')))
-    print('予測スコア: {}'.format(format(np.sum(estimate_scores), ',')))
-    ret['score'] = scores
-    pd.DataFrame(ret).to_csv('result.csv')
-    '''
+    print('スコア平均: {} ± {}'.format(format(round(np.mean(scores)), ','), format(round(np.std(scores)), ',')))
+    print('スコア: {}'.format(format(np.sum(scores), ',')))
+    # pd.DataFrame(ret).to_csv('result.csv')
