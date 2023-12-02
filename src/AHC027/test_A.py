@@ -7,7 +7,7 @@ class TestA(unittest.TestCase):
         solver = MockSolver('testcases/0000.txt', 'testcases/0000_out.txt')
         solver.solve()
         score = solver.evaluate()
-        print('スコア:', format(score, ','))
+        # self.assertEqual(score, 2967856)
 
 
 class MockSolver(Solver):
@@ -27,10 +27,6 @@ class MockSolver(Solver):
     def submission(self):
         self.out_file.write(self.ans)
         self.out_file.close()
-
-    def evaluate(self):
-        score = 0
-        return score
 
 
 if __name__ == '__main__':

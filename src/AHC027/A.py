@@ -8,7 +8,7 @@ class Solver:
         self.init()
         self.visited_cnt = 0
         self.DIJ = [(0, 1), (1, 0), (0, -1), (-1, 0)]
-        self.DIR = "RDLU"
+        self.DIR = 'RDLU'
         self.now_i, self.now_j = 0, 0
         self.ans = ''
 
@@ -78,7 +78,35 @@ class Solver:
         print(self.ans)
 
     def evaluate(self):
-        None
+        i, j = 0, 0
+        passes = {}
+        cnt = 0
+        self.rev = {'R': 0, 'D': 1, 'L': 2, 'U': 3}
+        for a in self.ans:
+            dir = self.rev[a]
+            cnt += 1
+            di, dj = self.DIJ[dir]
+            i2 = i + di
+            j2 = j + dj
+            if (i2, j2) in passes.keys():
+                passes[(i2, j2)].append(cnt)
+            else:
+                passes[(i2, j2)] = [cnt]
+            i, j = i2, j2
+        L = len(self.ans)
+        score = 0
+        for i in range(self.N):
+            for j in range(self.N):
+                d = self.d[i][j]
+                d1 = (L - passes[(i, j)][-1]) * d
+                p1 = 0
+                for p2 in passes[(i, j)] + [L]:
+                    d2 = d1 + d * (p2-p1-1)
+                    score += (d1+d2) * (p2-p1) / 2
+                    d1 = 0
+                    p1 = p2
+        return round(score / L)
+
 
 if __name__ == '__main__':
     solver = Solver()
