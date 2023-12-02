@@ -6,6 +6,10 @@ sys.setrecursionlimit(1000000)
 class Solver:
     def __init__(self):
         self.init()
+        self.visited_cnt = 0
+        self.DIJ = [(0, 1), (1, 0), (0, -1), (-1, 0)]
+        self.DIR = "RDLU"
+        self.now_i, self.now_j = 0, 0
 
     def init(self):
         self.N = int(input())
@@ -13,15 +17,12 @@ class Solver:
         self.v = [input() for _ in range(self.N)]
         self.d = [list(map(int, input().split())) for _ in range(self.N)]
         self.visited = [[False for _ in range(self.N)] for _ in range(self.N)]
-        self.visited_cnt = 1
-        self.DIJ = [(0, 1), (1, 0), (0, -1), (-1, 0)]
-        self.DIR = "RDLU"
-        self.now_i, self.now_j = 0, 0
 
     def go_all(self, i, j):
         if not self.visited[i][j]:
             self.visited[i][j] = True
             self.visited_cnt += 1
+            # print('visited', i, j, self.visited_cnt, sum([sum([1 for b in self.visited[i] if b]) for i in range(len(self.visited))]))
         for dir in range(4):
             di, dj = self.DIJ[dir]
             i2 = i + di
