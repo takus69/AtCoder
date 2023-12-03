@@ -24,13 +24,12 @@ class MockSolver(Solver):
         self.visited = [[False for _ in range(self.N)] for _ in range(self.N)]
         self.in_file.close()
 
-    def submission(self):
-        self.out_file.write(self.ans)
+    def submission(self, ans):
+        self.out_file.write(ans)
         self.out_file.close()
 
 
 if __name__ == '__main__':
-    solver = MockSolver('testcases/0014.txt', 'testcases/0014_out.txt')
-    solver.solve()
-    score = solver.evaluate()
+    solver = MockSolver('testcases/0000.txt', 'testcases/0000_out.txt')
+    score = solver.solve()
     print('スコア:', format(score, ','))

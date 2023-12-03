@@ -1,5 +1,6 @@
 import queue
 import sys
+import random
 sys.setrecursionlimit(1000000)
 
 
@@ -11,6 +12,7 @@ class Solver:
         self.DIR = 'RDLU'
         self.now_i, self.now_j = 0, 0
         self.ans = ''
+        random.seed(0)
 
     def init(self):
         self.N = int(input())
@@ -24,7 +26,8 @@ class Solver:
             self.visited[i][j] = True
             self.visited_cnt += 1
             # print('visited', i, j, self.visited_cnt, sum([sum([1 for b in self.visited[i] if b]) for i in range(len(self.visited))]))
-        for dir in range(4):
+        for dir in random.sample(range(4), 4):
+        # for dir in range(4):
             di, dj = self.DIJ[dir]
             i2 = i + di
             j2 = j + dj
@@ -68,14 +71,32 @@ class Solver:
                             q.put((i2, j2))
         return paths[to][1]
 
+    def reset(self):
+        self.visited_cnt = 0
+        self.now_i, self.now_j = 0, 0
+        self.ans = ''
+        self.visited = [[False for _ in range(self.N)] for _ in range(self.N)]
+
     def solve(self):
         # print('now', self.now_i, self.now_j)
-        self.go_all(self.now_i, self.now_j)
-        self.ans += self.short_path((self.now_i, self.now_j), (0, 0))
-        self.submission()
+        ans = ''
+        score = None
+        for i in range(100):
+            self.go_all(self.now_i, self.now_j)
+            self.ans += self.short_path((self.now_i, self.now_j), (0, 0))
+            score2 = self.evaluate()
+            if score is None:
+                score = score2
+                ans = self.ans
+            elif score > score2:
+                score = score2
+                ans = self.ans
+            self.reset()
+        self.submission(ans)
+        return score
 
-    def submission(self):
-        print(self.ans)
+    def submission(self, ans):
+        print(ans)
 
     def evaluate(self):
         i, j = 0, 0
