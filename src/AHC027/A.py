@@ -1,6 +1,7 @@
 import queue
 import sys
 import random
+import itertools
 sys.setrecursionlimit(1000000)
 
 
@@ -13,6 +14,7 @@ class Solver:
         self.now_i, self.now_j = 0, 0
         self.ans = ''
         random.seed(0)
+        self.dir_pattern = [0, 1, 2, 3]
 
     def init(self):
         self.N = int(input())
@@ -26,8 +28,8 @@ class Solver:
             self.visited[i][j] = True
             self.visited_cnt += 1
             # print('visited', i, j, self.visited_cnt, sum([sum([1 for b in self.visited[i] if b]) for i in range(len(self.visited))]))
-        for dir in random.sample(range(4), 4):
-        # for dir in range(4):
+        # for dir in random.sample(range(4), 4):
+        for dir in self.dir_pattern:
             di, dj = self.DIJ[dir]
             i2 = i + di
             j2 = j + dj
@@ -81,7 +83,10 @@ class Solver:
         # print('now', self.now_i, self.now_j)
         ans = ''
         score = None
-        for i in range(100):
+        # for i in range(100):
+        patterns = itertools.permutations([0, 1, 2, 3], 4)
+        for p in patterns:
+            self.dir_pattern = p
             self.go_all(self.now_i, self.now_j)
             self.ans += self.short_path((self.now_i, self.now_j), (0, 0))
             score2 = self.evaluate()
