@@ -83,7 +83,19 @@ class Solver:
         # print('now', self.now_i, self.now_j)
         ans = ''
         score = None
-        # for i in range(100):
+        '''
+        for i in range(500):
+            self.go_all(self.now_i, self.now_j)
+            self.ans += self.short_path((self.now_i, self.now_j), (0, 0))
+            score2 = self.evaluate()
+            if score is None:
+                score = score2
+                ans = self.ans
+            elif score > score2:
+                score = score2
+                ans = self.ans
+            self.reset()
+        '''
         patterns = itertools.permutations([0, 1, 2, 3], 4)
         for p in patterns:
             self.dir_pattern = p
