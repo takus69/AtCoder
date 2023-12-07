@@ -167,6 +167,39 @@ class Solver:
             pre_score = score2
             if time.time() - start > 1.5:
                 break
+        results = sorted(results, key=lambda x: x[0])
+        pre_score = 0
+        trial_cnt = 0
+        for score2, patterns, _ in results:
+            if len(patterns) < 3:
+                continue
+            if pre_score == score2:
+                continue
+            trial_cnt += 1
+            if trial_cnt > 2:
+                break
+            self.patterns = itertools.permutations([0, 1, 2, 3], 4)  # RDLU
+            for p in self.patterns:  # 最初の分岐でパターンを入れ替える
+                self.dir_pattern = patterns[0]
+                self.next_pattern = patterns[1:] + [p]
+                self.switch_flag = True
+                self.switch_cnt = 0
+                self.go_all(self.now_i, self.now_j)
+                self.ans += self.short_path((self.now_i, self.now_j), (0, 0))
+                score2 = self.evaluate()
+                results.append((score2, [self.dir_pattern] + self.next_pattern, self.ans))
+                if score is None:
+                    score = score2
+                    ans = self.ans
+                elif score > score2:
+                    score = score2
+                    ans = self.ans
+                self.reset()
+                if time.time() - start > 1.5:
+                    break
+            pre_score = score2
+            if time.time() - start > 1.5:
+                break
         # print(results)
         '''
         for p in self.patterns:
