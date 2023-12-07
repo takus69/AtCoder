@@ -92,6 +92,80 @@ class Solver:
                             q.put((i2, j2))
         return paths[to][1]
 
+    def go(self, i, j):
+        # 訪問箇所の個数を確認
+        if not self.visited[i][j]:
+            self.visited[i][j] = True
+            self.visited_cnt += 1
+        # 移動できる箇所を確認し、3箇所移動可能ならパターンを切り替え
+        can_mv_cnt = 0
+        for dir in self.dir_pattern:
+            di, dj = self.DIJ[dir]
+            i2 = i + di
+            j2 = j + dj
+            if 0 <= i2 < self.N and 0 <= j2 < self.N and not self.visited[i2][j2]:
+                if di == 0 and self.v[i][min(j, j2)] == '0' or dj == 0 and self.h[min(i, i2)][j] == '0':
+                    can_mv_cnt += 1
+        # 移動箇所がなくなったら終了
+        if can_mv_cnt == 0:
+            self.go_flag = False
+            return
+        '''
+        if can_mv_cnt == 3 and self.switch_flag and self.switch_cnt < len(self.next_pattern):
+            self.dir_pattern = self.next_pattern[self.switch_cnt]
+            self.switch_flag = False
+            self.switch_cnt += 1
+        elif can_mv_cnt < 3 and not self.switch_flag:
+            self.switch_flag = True
+        '''
+        # 次の移動箇所を再帰的に実施
+        for dir in self.dir_pattern:
+            di, dj = self.DIJ[dir]
+            i2 = i + di
+            j2 = j + dj
+            if 0 <= i2 < self.N and 0 <= j2 < self.N and not self.visited[i2][j2]:
+                if di == 0 and self.v[i][min(j, j2)] == '0' or dj == 0 and self.h[min(i, i2)][j] == '0':
+                    self.ans += self.DIR[dir]
+                    self.now_i, self.now_j = i2, j2
+                    self.go(i2, j2)
+                    if not self.go_flag:
+                        break
+
+    def short_path_not_visited(self, frm):
+        '''
+        frmから未訪問の一番近いマスへ移動
+        '''
+        f_i, f_j = frm[0], frm[1]
+        q = queue.Queue()
+        paths = {(f_i, f_j): (0, '')}  # 地点(i, j)の最短移動回数と移動方法を保持
+        q.put((f_i, f_j))
+        while not q.empty():
+            (i, j) = q.get()
+            mv_cnt, mv_path = paths[(i, j)]
+            for dir in range(4):
+                di, dj = self.DIJ[dir]
+                i2 = i + di
+                j2 = j + dj
+                if 0 <= i2 < self.N and 0 <= j2 < self.N:
+                    if di == 0 and self.v[i][min(j, j2)] == '0' or dj == 0 and self.h[min(i, i2)][j] == '0':
+                        if (i2, j2) in paths.keys():
+                            if mv_cnt+1 < paths[(i2, j2)][0]:
+                                paths[(i2, j2)] = (mv_cnt+1, mv_path+self.DIR[dir])
+                                q.put((i2, j2))
+                        else:
+                            paths[(i2, j2)] = (mv_cnt+1, mv_path+self.DIR[dir])
+                            q.put((i2, j2))
+        d = self.N**2
+        to = (0, 0)
+        for k, v in paths.items():
+            if v[0] < d and not self.visited[k[0]][k[1]]:
+                d = v[0]
+                to = k
+        self.now_i, self.now_j = to[0], to[1]
+        self.visited[self.now_i][self.now_j] = True
+        self.visited_cnt += 1
+        return paths[to][1]
+
     def reset(self):
         self.visited_cnt = 0
         self.now_i, self.now_j = 0, 0
@@ -103,18 +177,19 @@ class Solver:
         ans = ''
         score = None
         start = time.time()
-        '''
-        for i in range(500):
-            self.go_all(self.now_i, self.now_j)
-            self.ans += self.short_path((self.now_i, self.now_j), (0, 0))
-            score2 = self.evaluate()
-            if score is None:
-                score = score2
-                ans = self.ans
-            elif score > score2:
-                score = score2
-                ans = self.ans
-            self.reset()
+        while self.visited_cnt < self.N**2:
+            self.go_flag = True
+            self.go(self.now_i, self.now_j)
+            self.ans += self.short_path_not_visited((self.now_i, self.now_j))
+        self.ans += self.short_path((self.now_i, self.now_j), (0, 0))
+        score2 = self.evaluate()
+        if score is None:
+            score = score2
+            ans = self.ans
+        elif score > score2:
+            score = score2
+            ans = self.ans
+        self.reset()
         '''
         self.patterns = itertools.permutations([0, 1, 2, 3], 4)  # RDLU
         results = []  # (スコア、パターンの組み合わせ、出力)を保持
@@ -201,6 +276,7 @@ class Solver:
             if time.time() - start > 1.5:
                 break
         # print(results)
+        '''
         '''
         for p in self.patterns:
             self.dir_pattern = p
