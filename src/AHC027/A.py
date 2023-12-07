@@ -24,10 +24,23 @@ class Solver:
         self.visited = [[False for _ in range(self.N)] for _ in range(self.N)]
 
     def go_all(self, i, j):
+        # 移動できる箇所を確認し、3箇所移動可能ならパターンを切り替え
+        can_mv_cnt = 0
+        for dir in self.dir_pattern:
+            di, dj = self.DIJ[dir]
+            i2 = i + di
+            j2 = j + dj
+            if 0 <= i2 < self.N and 0 <= j2 < self.N and not self.visited[i2][j2]:
+                if di == 0 and self.v[i][min(j, j2)] == '0' or dj == 0 and self.h[min(i, i2)][j] == '0':
+                    can_mv_cnt += 1
+        if can_mv_cnt == 3:
+            self.dir_pattern = self.next_pattern
+        # 訪問箇所の個数を確認
         if not self.visited[i][j]:
             self.visited[i][j] = True
             self.visited_cnt += 1
             # print('visited', i, j, self.visited_cnt, sum([sum([1 for b in self.visited[i] if b]) for i in range(len(self.visited))]))
+        # 次の移動箇所を再帰的に実施
         # for dir in random.sample(range(4), 4):
         for dir in self.dir_pattern:
             di, dj = self.DIJ[dir]
@@ -96,8 +109,23 @@ class Solver:
                 ans = self.ans
             self.reset()
         '''
-        patterns = itertools.permutations([0, 1, 2, 3], 4)
-        for p in patterns:
+        self.patterns = itertools.permutations([0, 1, 2, 3], 4)  # RDLU
+        for p1 in [[0, 1, 2, 3], [1, 0, 2, 3]]:  # 初期はRDかDRから始める
+            for p2 in self.patterns:  # 最初の分岐でパターンを入れ替える
+                self.dir_pattern = p1
+                self.next_pattern = p2
+                self.go_all(self.now_i, self.now_j)
+                self.ans += self.short_path((self.now_i, self.now_j), (0, 0))
+                score2 = self.evaluate()
+                if score is None:
+                    score = score2
+                    ans = self.ans
+                elif score > score2:
+                    score = score2
+                    ans = self.ans
+                self.reset()
+        '''
+        for p in self.patterns:
             self.dir_pattern = p
             self.go_all(self.now_i, self.now_j)
             self.ans += self.short_path((self.now_i, self.now_j), (0, 0))
@@ -109,6 +137,7 @@ class Solver:
                 score = score2
                 ans = self.ans
             self.reset()
+        '''
         self.submission(ans)
         return score
 
