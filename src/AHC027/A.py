@@ -2,6 +2,7 @@ import queue
 import sys
 import random
 import itertools
+import time
 sys.setrecursionlimit(1000000)
 
 
@@ -33,8 +34,13 @@ class Solver:
             if 0 <= i2 < self.N and 0 <= j2 < self.N and not self.visited[i2][j2]:
                 if di == 0 and self.v[i][min(j, j2)] == '0' or dj == 0 and self.h[min(i, i2)][j] == '0':
                     can_mv_cnt += 1
-        if can_mv_cnt == 3:
-            self.dir_pattern = self.next_pattern
+        # 3箇所移動可能かつ、切り替えてよいかつ、次のパターンがある場合に切り替え
+        if can_mv_cnt == 3 and self.switch_flag and self.switch_cnt < len(self.next_pattern):
+            self.dir_pattern = self.next_pattern[self.switch_cnt]
+            self.switch_flag = False
+            self.switch_cnt += 1
+        elif can_mv_cnt < 3 and not self.switch_flag:
+            self.switch_flag = True
         # 訪問箇所の個数を確認
         if not self.visited[i][j]:
             self.visited[i][j] = True
@@ -96,6 +102,7 @@ class Solver:
         # print('now', self.now_i, self.now_j)
         ans = ''
         score = None
+        start = time.time()
         '''
         for i in range(500):
             self.go_all(self.now_i, self.now_j)
@@ -110,13 +117,17 @@ class Solver:
             self.reset()
         '''
         self.patterns = itertools.permutations([0, 1, 2, 3], 4)  # RDLU
+        results = []  # (スコア、パターンの組み合わせ、出力)を保持
         for p1 in [[0, 1, 2, 3], [1, 0, 2, 3]]:  # 初期はRDかDRから始める
             for p2 in self.patterns:  # 最初の分岐でパターンを入れ替える
                 self.dir_pattern = p1
-                self.next_pattern = p2
+                self.next_pattern = [p2]
+                self.switch_flag = True
+                self.switch_cnt = 0
                 self.go_all(self.now_i, self.now_j)
                 self.ans += self.short_path((self.now_i, self.now_j), (0, 0))
                 score2 = self.evaluate()
+                results.append((score2, [p1, p2], self.ans))
                 if score is None:
                     score = score2
                     ans = self.ans
@@ -124,6 +135,39 @@ class Solver:
                     score = score2
                     ans = self.ans
                 self.reset()
+        results = sorted(results, key=lambda x: x[0])
+        # print(results)
+        pre_score = 0
+        trial_cnt = 0
+        for score2, patterns, _ in results:
+            if pre_score == score2:
+                continue
+            trial_cnt += 1
+            if trial_cnt > 2:
+                break
+            self.patterns = itertools.permutations([0, 1, 2, 3], 4)  # RDLU
+            for p in self.patterns:  # 最初の分岐でパターンを入れ替える
+                self.dir_pattern = patterns[0]
+                self.next_pattern = patterns[1:] + [p]
+                self.switch_flag = True
+                self.switch_cnt = 0
+                self.go_all(self.now_i, self.now_j)
+                self.ans += self.short_path((self.now_i, self.now_j), (0, 0))
+                score2 = self.evaluate()
+                results.append((score2, [self.dir_pattern] + self.next_pattern, self.ans))
+                if score is None:
+                    score = score2
+                    ans = self.ans
+                elif score > score2:
+                    score = score2
+                    ans = self.ans
+                self.reset()
+                if time.time() - start > 1.5:
+                    break
+            pre_score = score2
+            if time.time() - start > 1.5:
+                break
+        # print(results)
         '''
         for p in self.patterns:
             self.dir_pattern = p
