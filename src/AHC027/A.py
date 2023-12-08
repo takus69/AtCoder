@@ -30,7 +30,7 @@ class Solver:
         if not self.visited[i][j]:
             self.visited[i][j] = True
             self.visited_cnt += 1
-        # 移動できる箇所を確認し、3箇所移動可能ならパターンを切り替え
+        # 移動できる箇所を確認
         can_mv_cnt = 0
         for dir in self.dir_pattern:
             di, dj = self.DIJ[dir]
@@ -65,6 +65,7 @@ class Solver:
         q = queue.Queue()
         paths = {(f_i, f_j): (0, '')}  # 地点(i, j)の最短移動回数と移動方法を保持
         q.put((f_i, f_j))
+        to = (0, 0)
         while not q.empty():
             (i, j) = q.get()
             mv_cnt, mv_path = paths[(i, j)]
@@ -82,7 +83,6 @@ class Solver:
                             paths[(i2, j2)] = (mv_cnt+1, mv_path+self.DIR[dir])
                             q.put((i2, j2))
         d = self.N**2
-        to = (0, 0)
         for k, v in paths.items():
             if v[0] < d and not self.visited[k[0]][k[1]]:
                 d = v[0]
@@ -124,41 +124,59 @@ class Solver:
         self.ans = ''
         self.visited = [[False for _ in range(self.N)] for _ in range(self.N)]
 
+    def run_one(self, dir_pattern, next_pattern):
+        self.trial_cnt += 1
+        self.dir_pattern = dir_pattern
+        self.next_pattern = next_pattern
+        self.switch_cnt = 0
+        while self.visited_cnt < self.N**2:
+            self.go_flag = True
+            tmp_start = time.time()
+            self.go(self.now_i, self.now_j)
+            self.go_time += time.time() - tmp_start
+            tmp_start = time.time()
+            self.ans += self.short_path_not_visited((self.now_i, self.now_j))
+            self.short_time += time.time() - tmp_start
+            if self.switch_cnt < len(self.next_pattern):
+                self.dir_pattern = self.next_pattern[self.switch_cnt]
+            self.switch_cnt += 1
+        self.ans += self.short_path((self.now_i, self.now_j), (0, 0))
+
     def solve(self):
-        # print('now', self.now_i, self.now_j)
         # 初期化
         ans = ''
         score = None
         start = time.time()
 
-        self.patterns = itertools.permutations([0, 1, 2, 3], 4)  # RDLU
+        self.patterns = list(itertools.permutations([0, 1, 2, 3], 4))  # RDLU
         self.trial_cnt = 0
         self.go_cnt = 0
         self.short_cnt = 0
-        for p2 in self.patterns:  # 最初の分岐でパターンを入れ替える
-            for p1 in [[0, 1, 2, 3], [1, 0, 2, 3]]:  # 初期はRDかDRから始める
-                self.trial_cnt += 1
-                self.dir_pattern = p1
-                self.next_pattern = [p2]
-                self.switch_cnt = 0
-                while self.visited_cnt < self.N**2:
-                    self.go_flag = True
-                    self.go(self.now_i, self.now_j)
-                    self.ans += self.short_path_not_visited((self.now_i, self.now_j))
-                    if self.switch_cnt < len(self.next_pattern):
-                        self.dir_pattern = self.next_pattern[self.switch_cnt]
-                    self.switch_cnt += 1
-                self.ans += self.short_path((self.now_i, self.now_j), (0, 0))
-                score2 = self.evaluate()
-                if score is None:
-                    score = score2
-                    ans = self.ans
-                elif score > score2:
-                    score = score2
-                    ans = self.ans
-                self.reset()
-                if time.time() - start > 1.5:
-                    break
+        self.go_time = 0
+        self.short_time = 0
+        for p in self.patterns:
+            self.run_one(p, [])
+            score2 = self.evaluate()
+            if score is None:
+                score = score2
+                ans = self.ans
+            elif score > score2:
+                score = score2
+                ans = self.ans
+            self.reset()
+            if time.time() - start > 1.5:
+                break
+        for _ in range(200):
+            p = random.choices(self.patterns, k=3)
+            self.run_one(p[0], p[1:])
+            score2 = self.evaluate()
+            if score is None:
+                score = score2
+                ans = self.ans
+            elif score > score2:
+                score = score2
+                ans = self.ans
+            self.reset()
             if time.time() - start > 1.5:
                 break
         self.submission(ans)

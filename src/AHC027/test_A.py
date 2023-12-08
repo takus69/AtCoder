@@ -33,3 +33,4 @@ if __name__ == '__main__':
     solver = MockSolver('testcases/0003.txt', 'testcases/0003_out.txt')
     score = solver.solve()
     print('スコア:', format(score, ','))
+    print('trial_cnt: {}, go_cnt: {}, go_time: {}, short_cnt: {}, short_time: {}'.format(solver.trial_cnt, solver.go_cnt, solver.go_time, solver.short_cnt, solver.short_time))
