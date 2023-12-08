@@ -93,6 +93,7 @@ class Solver:
         return paths[to][1]
 
     def go(self, i, j):
+        self.go_cnt += 1
         # 訪問箇所の個数を確認
         if not self.visited[i][j]:
             self.visited[i][j] = True
@@ -135,6 +136,7 @@ class Solver:
         '''
         frmから未訪問の一番近いマスへ移動
         '''
+        self.short_cnt += 1
         f_i, f_j = frm[0], frm[1]
         q = queue.Queue()
         paths = {(f_i, f_j): (0, '')}  # 地点(i, j)の最短移動回数と移動方法を保持
@@ -181,10 +183,12 @@ class Solver:
 
         self.patterns = itertools.permutations([0, 1, 2, 3], 4)  # RDLU
         results = []  # (スコア、パターンの組み合わせ、出力)を保持
-        trial_cnt = 0
+        self.trial_cnt = 0
+        self.go_cnt = 0
+        self.short_cnt = 0
         for p2 in self.patterns:  # 最初の分岐でパターンを入れ替える
             for p1 in [[0, 1, 2, 3], [1, 0, 2, 3]]:  # 初期はRDかDRから始める
-                trial_cnt += 1
+                self.trial_cnt += 1
                 self.dir_pattern = p1
                 self.next_pattern = [p2]
                 self.switch_cnt = 0
@@ -208,7 +212,6 @@ class Solver:
                     break
             if time.time() - start > 1.5:
                 break
-        # print('trial_cnt:', trial_cnt)
         '''
         self.patterns = itertools.permutations([0, 1, 2, 3], 4)  # RDLU
         results = []  # (スコア、パターンの組み合わせ、出力)を保持
