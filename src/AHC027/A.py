@@ -147,7 +147,7 @@ class Solver:
         ans = ''
         score = None
         start = time.time()
-        limit_time = 1.8
+        limit_time = 1.6
 
         self.patterns = list(itertools.permutations([0, 1, 2, 3], 4))  # RDLU
         self.trial_cnt = 0
