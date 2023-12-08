@@ -147,6 +147,7 @@ class Solver:
         ans = ''
         score = None
         start = time.time()
+        limit_time = 1.8
 
         self.patterns = list(itertools.permutations([0, 1, 2, 3], 4))  # RDLU
         self.trial_cnt = 0
@@ -164,9 +165,11 @@ class Solver:
                 score = score2
                 ans = self.ans
             self.reset()
-            if time.time() - start > 1.5:
+            if (time.time() - start)*(self.trial_cnt+2)/self.trial_cnt > limit_time:
                 break
         for _ in range(200):
+            if (time.time() - start)*(self.trial_cnt+1)/self.trial_cnt > limit_time:
+                break
             p = random.choices(self.patterns, k=3)
             self.run_one(p[0], p[1:])
             score2 = self.evaluate()
@@ -177,8 +180,6 @@ class Solver:
                 score = score2
                 ans = self.ans
             self.reset()
-            if time.time() - start > 1.5:
-                break
         self.submission(ans)
         return score
 
