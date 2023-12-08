@@ -174,22 +174,29 @@ class Solver:
 
     def solve(self):
         # print('now', self.now_i, self.now_j)
+        # 初期化
         ans = ''
         score = None
         start = time.time()
-        while self.visited_cnt < self.N**2:
-            self.go_flag = True
-            self.go(self.now_i, self.now_j)
-            self.ans += self.short_path_not_visited((self.now_i, self.now_j))
-        self.ans += self.short_path((self.now_i, self.now_j), (0, 0))
-        score2 = self.evaluate()
-        if score is None:
-            score = score2
-            ans = self.ans
-        elif score > score2:
-            score = score2
-            ans = self.ans
-        self.reset()
+
+        self.patterns = itertools.permutations([0, 1, 2, 3], 4)  # RDLU
+        for p in self.patterns:
+            self.dir_pattern = p
+            while self.visited_cnt < self.N**2:
+                self.go_flag = True
+                self.go(self.now_i, self.now_j)
+                self.ans += self.short_path_not_visited((self.now_i, self.now_j))
+            self.ans += self.short_path((self.now_i, self.now_j), (0, 0))
+            score2 = self.evaluate()
+            if score is None:
+                score = score2
+                ans = self.ans
+            elif score > score2:
+                score = score2
+                ans = self.ans
+            self.reset()
+            if time.time() - start > 1.5:
+                break
         '''
         self.patterns = itertools.permutations([0, 1, 2, 3], 4)  # RDLU
         results = []  # (スコア、パターンの組み合わせ、出力)を保持
