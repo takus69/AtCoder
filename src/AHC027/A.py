@@ -180,23 +180,35 @@ class Solver:
         start = time.time()
 
         self.patterns = itertools.permutations([0, 1, 2, 3], 4)  # RDLU
-        for p in self.patterns:
-            self.dir_pattern = p
-            while self.visited_cnt < self.N**2:
-                self.go_flag = True
-                self.go(self.now_i, self.now_j)
-                self.ans += self.short_path_not_visited((self.now_i, self.now_j))
-            self.ans += self.short_path((self.now_i, self.now_j), (0, 0))
-            score2 = self.evaluate()
-            if score is None:
-                score = score2
-                ans = self.ans
-            elif score > score2:
-                score = score2
-                ans = self.ans
-            self.reset()
+        results = []  # (スコア、パターンの組み合わせ、出力)を保持
+        trial_cnt = 0
+        for p2 in self.patterns:  # 最初の分岐でパターンを入れ替える
+            for p1 in [[0, 1, 2, 3], [1, 0, 2, 3]]:  # 初期はRDかDRから始める
+                trial_cnt += 1
+                self.dir_pattern = p1
+                self.next_pattern = [p2]
+                self.switch_cnt = 0
+                while self.visited_cnt < self.N**2:
+                    self.go_flag = True
+                    self.go(self.now_i, self.now_j)
+                    self.ans += self.short_path_not_visited((self.now_i, self.now_j))
+                    if self.switch_cnt < len(self.next_pattern):
+                        self.dir_pattern = self.next_pattern[self.switch_cnt]
+                    self.switch_cnt += 1
+                self.ans += self.short_path((self.now_i, self.now_j), (0, 0))
+                score2 = self.evaluate()
+                if score is None:
+                    score = score2
+                    ans = self.ans
+                elif score > score2:
+                    score = score2
+                    ans = self.ans
+                self.reset()
+                if time.time() - start > 1.5:
+                    break
             if time.time() - start > 1.5:
                 break
+        # print('trial_cnt:', trial_cnt)
         '''
         self.patterns = itertools.permutations([0, 1, 2, 3], 4)  # RDLU
         results = []  # (スコア、パターンの組み合わせ、出力)を保持

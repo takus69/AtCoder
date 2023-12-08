@@ -30,6 +30,6 @@ class MockSolver(Solver):
 
 
 if __name__ == '__main__':
-    solver = MockSolver('testcases/0000.txt', 'testcases/0000_out.txt')
+    solver = MockSolver('testcases/0003.txt', 'testcases/0003_out.txt')
     score = solver.solve()
     print('スコア:', format(score, ','))
