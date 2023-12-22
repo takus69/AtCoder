@@ -4,7 +4,7 @@ from tqdm import tqdm
 
 
 scores = []
-for i in tqdm(range(100)):
+for i in tqdm(range(50)):
     score = run(i)
     scores.append(score)
-print('average', np.mean(scores))
+print('score', format(np.sum(scores), ','))
