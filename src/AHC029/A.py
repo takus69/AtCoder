@@ -118,8 +118,7 @@ class Solver:
 def main():
     n, m, k, t = map(int, input().split())
     solver = Solver(n, m, k, t)
-    score = solver.solve()
-    print(f"score:{score}", file=sys.stderr)
+    solver.solve()
 
 
 if __name__ == "__main__":
