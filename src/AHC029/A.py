@@ -154,12 +154,12 @@ class Solver:
         else:
             w_p = 1
             for i, card in can_cards.get(CardType.WORK_ALL, []):
-                if w_p < card.w*self.m / card.p and card.w*self.m > 2*card.p:
-                    work = card.w*self.m / card.p
+                if 2**self.invest_level < card.w*self.m and w_p < card.w*self.m / card.p and card.w*self.m > 2*card.p:
+                    w_p = card.w*self.m / card.p
                     card_i = i
             for i, card in can_cards[CardType.WORK_SINGLE][1:]:
-                if w_p < card.w / card.p and card.w > 2*card.p:
-                    work = card.w / card.p
+                if 2**self.invest_level < card.w and w_p < card.w / card.p and card.w > 2*card.p:
+                    w_p = card.w / card.p
                     card_i = i
         return card_i
 
