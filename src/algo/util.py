@@ -6,6 +6,9 @@ def gcd(x, y):
         return x
     return gcd(y, x % y)
 
+def modint(P, Q, MOD):
+    '''有理数P/QのMODを算出'''
+    return (P * pow(Q, -1, MOD)) % MOD
 
 def primes(n):
     '''
