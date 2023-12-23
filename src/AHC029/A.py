@@ -83,7 +83,9 @@ class Solver:
         self.cards = self.judge.read_initial_cards()
         self.projects = self.judge.read_projects()
 
+        self.cnt = 0
         for _ in range(self.t):
+            self.cnt += 1
             use_card_i, use_target = self._select_action()
             if self.cards[use_card_i].t == CardType.INVEST:
                 self.invest_level += 1
@@ -107,12 +109,59 @@ class Solver:
         return self.money
 
     def _select_action(self) -> tuple[int, int]:
-        # TODO: implement your strategy
-        return (0, 0)
+        # 方針カードの決定
+        can_cards = {}
+        for i in range(self.n):
+            card = self.cards[i]
+            can_cards[card.t] = can_cards.get(card.t, []) + [(i, card)]
+        # print(can_cards, file=sys.stderr)
+        card_i = 0
+        if CardType.INVEST in can_cards.keys() and self.invest_level < MAX_INVEST_LEVEL:
+            card_i = can_cards[CardType.INVEST][0][0]
+        else:
+            work = 0
+            for i, card in can_cards.get(CardType.WORK_ALL, []):
+                if work < card.w*self.m:
+                    work = card.w*self.m
+                    card_i = i
+            for i, card in can_cards.get(CardType.WORK_SINGLE, []):
+                if work < card.w:
+                    work = card.w
+                    card_i = i
+        
+        # プロジェクトの決定
+        project_i = 0
+        v_h = 0
+        for i in range(self.m):
+            p = self.projects[i]
+            if v_h < p.v / p.h:
+                project_i = i
+                v_h = p.v / p.h
+        # print(i, self.cards, file=sys.stderr)
+        if self.cards[card_i].t in [CardType.INVEST, CardType.WORK_ALL, CardType.CANCEL_ALL]:
+            project_i = 0
+        return (card_i, project_i)
 
     def _select_next_card(self, next_cards: list[Card]) -> int:
-        # TODO: implement your strategy
-        return 0
+        can_cards = {}
+        for i in range(self.k):
+            card = next_cards[i]
+            if card.p <= self.money:
+                can_cards[card.t] = can_cards.get(card.t, []) + [(i, card)]
+        card_i = 0
+        if CardType.INVEST in can_cards.keys() and self.invest_level < MAX_INVEST_LEVEL:
+            card_i = can_cards[CardType.INVEST][0][0]
+        else:
+            w_p = 1
+            for i, card in can_cards.get(CardType.WORK_ALL, []):
+                if w_p < card.w*self.m / card.p and card.w*self.m > 2*card.p:
+                    work = card.w*self.m / card.p
+                    card_i = i
+            for i, card in can_cards[CardType.WORK_SINGLE][1:]:
+                if w_p < card.w / card.p and card.w > 2*card.p:
+                    work = card.w / card.p
+                    card_i = i
+        return card_i
 
 
 def main():
