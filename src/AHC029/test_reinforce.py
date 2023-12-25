@@ -4,8 +4,8 @@ import sys
 
 def run(i):
     output_str = subprocess.run(f'powershell cat in/{i:04}.txt | tester.exe python reinforce.py > reinforce_out/{i:04}_out.txt', shell=True, capture_output=True, text=True).stderr
-    # print('aaaaaaaaaaaa', output_str, file=sys.stderr)
-    score = int(output_str.split('\n')[0].split()[-1])
+    print(output_str, file=sys.stderr)
+    # score = int(output_str.split('\n')[0].split()[-1])
     return score
 
 

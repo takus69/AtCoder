@@ -3,6 +3,10 @@ from enum import IntEnum
 import sys
 import numpy as np
 import pandas as pd
+from sklearn.neural_network import MLPRegressor
+import warnings 
+
+warnings.simplefilter('ignore')
 
 MAX_INVEST_LEVEL = 20
 MAX_T = 1000
@@ -85,6 +89,7 @@ class Solver:
         self.k_map = {0: []}
         self.input_datas = []
         self.output_datas = []
+        self.model = self.make_network()
 
     def solve(self) -> int:
         self.turn = 0
@@ -101,6 +106,7 @@ class Solver:
         output_data = [0]
 
         for _ in range(self.t):
+            self.predict(input_data)
             use_card_i, use_target = self._select_action()
             if self.cards[use_card_i].t == CardType.INVEST:
                 self.invest_level += 1
@@ -159,10 +165,48 @@ class Solver:
 
 
     def _select_action(self) -> tuple[int, int]:
-        return (0, 0)
+        # 使用する方針カードの選択
+        pred_c = self.pred[MAX_K:MAX_K+MAX_N]
+        card_i = -1
+        max_pred = -1
+        for i in range(self.n):
+            if max_pred < pred_c[i]:
+                card_i = i
+                max_pred = pred_c[i]
+
+        # プロジェクトの選択
+        if self.cards[card_i].t in [CardType.WORK_SINGLE, CardType.CANCEL_SINGLE]:
+            pred_m = self.pred[MAX_K+MAX_N:MAX_K+MAX_N+MAX_M]
+            project_i = -1
+            max_pred = -1
+            for i in range(self.m):
+                if max_pred < pred_m[i]:
+                    project_i = i
+                    max_pred = pred_m[i]
+        else:
+            project_i = 0
+        return (card_i, project_i)
 
     def _select_next_card(self, next_cards: list[Card]) -> int:
-        return 0
+        pred_r = self.pred[:MAX_K]
+        select_i = -1
+        max_pred = -1
+        for i in range(self.k):
+            card = next_cards[i]
+            if card.p <= self.money:
+                if max_pred < pred_r[i]:
+                    select_i = i
+                    max_pred = pred_r[i]
+        return select_i
+
+    def make_network(self, hidden_layer_sizes=(32, 32,)):
+        model = MLPRegressor(hidden_layer_sizes=hidden_layer_sizes, random_state=1, max_iter=1)
+        model.fit(X=np.zeros((1, 119)), y=np.zeros((1, 20)))
+        return model
+
+    def predict(self, input_data):
+        self.pred = self.model.predict(np.array(input_data).reshape(1, -1))[0]
+        self.pred -= np.min(self.pred)
 
 def make_learning_data(input_datas, output_datas):
     input_df = pd.DataFrame(input_datas)
