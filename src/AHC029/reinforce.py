@@ -4,7 +4,8 @@ import sys
 import numpy as np
 import pandas as pd
 from sklearn.neural_network import MLPRegressor
-import warnings 
+import warnings
+from reinforce_train import make_network, load_param
 
 warnings.simplefilter('ignore')
 
@@ -89,7 +90,8 @@ class Solver:
         self.k_map = {0: []}
         self.input_datas = []
         self.output_datas = []
-        self.model = self.make_network()
+        self.model = make_network()
+        self.model = load_param(self.model)
 
     def solve(self) -> int:
         self.turn = 0
@@ -198,11 +200,6 @@ class Solver:
                     select_i = i
                     max_pred = pred_r[i]
         return select_i
-
-    def make_network(self, hidden_layer_sizes=(32, 32,)):
-        model = MLPRegressor(hidden_layer_sizes=hidden_layer_sizes, random_state=1, max_iter=1)
-        model.fit(X=np.zeros((1, 119)), y=np.zeros((1, 20)))
-        return model
 
     def predict(self, input_data):
         self.pred = self.model.predict(np.array(input_data).reshape(1, -1))[0]

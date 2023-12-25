@@ -8,3 +8,4 @@ tools_windows
 in
 out
 .ipynb_checkpoints
+*.json
