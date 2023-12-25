@@ -27,7 +27,7 @@ def make_data(input_df=None, output_df=None):
 
     print('score', format(np.sum(data['score']), ','))
     pd.DataFrame(data).to_csv('result.csv', index=False)
-    return train_df, target_df
+    return train_df, target_df, np.sum(data['score'])
 
 
 if __name__ == '__main__':

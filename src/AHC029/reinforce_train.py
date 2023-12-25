@@ -5,6 +5,7 @@ from sklearn.model_selection import KFold
 from sklearn.metrics import r2_score
 import pickle
 from reinforce_make_data import make_data
+import random
 
 
 def make_network(hidden_layer_sizes=(32, 32,), iter=10, train=False, verbose=False):
@@ -12,9 +13,7 @@ def make_network(hidden_layer_sizes=(32, 32,), iter=10, train=False, verbose=Fal
     model.fit(X=np.zeros((1, 119)), y=np.zeros((1, 20)))
     return model
 
-def train_one(model):
-    train_df = pd.read_csv('train.csv')
-    target_df = pd.read_csv('target.csv')
+def train_one(model, train_df, target_df):
     model.fit(X=train_df, y=target_df)
     score = model.score(train_df, target_df)
     with open('coef.txt', 'wb') as f:
@@ -34,11 +33,20 @@ def load_param(model):
 
 if __name__ == '__main__':
     model = make_network(iter=100, train=True, verbose=False)
-    train_df, target_df = make_data()
-    for i in range(10):
+    train_df, target_df, score = make_data()
+    r2s = []
+    scores = [score]
+    for i in range(100):
         print(f'{i+1}回目の学習')
-        model = train_one(model)
-        train_df, target_df = make_data(train_df, target_df)
+        sample_index = random.sample(range(len(train_df)), k=2000)
+        model, r2 = train_one(model, train_df.iloc[sample_index], target_df.iloc[sample_index])
+        print(f'学習のR2値: {r2}')
+        train_df, target_df, score = make_data(train_df, target_df)
+        print(f'スコア: {score}')
+        r2s.append(r2)
+        scores.append(score)
+        print('r2:', r2s)
+        print('scores:', scores)
     '''
     kf = KFold()
     for train_index, test_index in (kf.split(train_df)):
