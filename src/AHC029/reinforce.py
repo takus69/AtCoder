@@ -6,6 +6,7 @@ import pandas as pd
 from sklearn.neural_network import MLPRegressor
 import warnings
 from reinforce_train import make_network, load_param
+import random
 
 warnings.simplefilter('ignore')
 
@@ -15,6 +16,7 @@ MAX_N = 7
 MAX_M = 8
 MAX_K = 5
 gamma = 0.99
+epsilon = 0.1
 
 
 @dataclass
@@ -204,6 +206,10 @@ class Solver:
     def predict(self, input_data):
         self.pred = self.model.predict(np.array(input_data).reshape(1, -1))[0]
         self.pred -= np.min(self.pred)
+        # ε-greedy
+        if random.random() < epsilon:
+            self.pred = [random.random() for _ in range(20)]
+
 
 def make_learning_data(input_datas, output_datas):
     input_df = pd.DataFrame(input_datas)

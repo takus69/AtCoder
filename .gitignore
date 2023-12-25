@@ -9,3 +9,4 @@ in
 out
 .ipynb_checkpoints
 *.json
+*.pkl

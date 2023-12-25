@@ -32,14 +32,15 @@ def load_param(model):
     return model
 
 if __name__ == '__main__':
-    model = make_network(iter=100, train=True, verbose=False)
+    model = make_network(iter=10, train=True, verbose=False)
     train_df, target_df, score = make_data()
     r2s = []
     scores = [score]
     for i in range(100):
         print(f'{i+1}回目の学習')
-        sample_index = random.sample(range(len(train_df)), k=2000)
-        model, r2 = train_one(model, train_df.iloc[sample_index], target_df.iloc[sample_index])
+        # sample_index = random.sample(range(len(train_df)), k=2000)
+        # model, r2 = train_one(model, train_df.iloc[sample_index], target_df.iloc[sample_index])
+        model, r2 = train_one(model, train_df, target_df)
         print(f'学習のR2値: {r2}')
         train_df, target_df, score = make_data(train_df, target_df)
         print(f'スコア: {score}')
@@ -47,6 +48,9 @@ if __name__ == '__main__':
         scores.append(score)
         print('r2:', r2s)
         print('scores:', scores)
+        if i % 10 == 0:
+            with open(f'model_{i}.pkl', 'wb') as f:
+                pickle.dump(model, f)
     '''
     kf = KFold()
     for train_index, test_index in (kf.split(train_df)):

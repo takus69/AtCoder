@@ -2,7 +2,10 @@ from test_reinforce import run
 import numpy as np
 from tqdm import tqdm
 import pandas as pd
+import random
 
+
+SAMPLE_CNT = 50
 
 def make_data(input_df=None, output_df=None):
     data = {'i': [], 'score': []}
@@ -12,7 +15,7 @@ def make_data(input_df=None, output_df=None):
     else:
         input_dfs = [input_df]
         output_dfs = [output_df]
-    for i in tqdm(range(50)):
+    for i in tqdm(range(SAMPLE_CNT)):
         score = run(i)
         data['i'].append(i)
         data['score'].append(score)
@@ -21,6 +24,11 @@ def make_data(input_df=None, output_df=None):
         output_dfs.append(pd.read_csv('output.csv'))
     train_df = pd.concat(input_dfs, axis=0)
     target_df = pd.concat(output_dfs, axis=0)
+    # 10エピソード分だけランダムで残す(SAMPLE_CNT * 1000 * 10)
+    MAX_CNT = SAMPLE_CNT*1000*10
+    if len(train_df) > MAX_CNT:
+        sample_index = random.sample(range(len(train_df)), k=MAX_CNT)
+        train_df, target_df = train_df.iloc[sample_index], target_df.iloc[sample_index]
     train_df.to_csv('train.csv', index=False)
     target_df.to_csv('target.csv', index=False)
     print('学習データ作成: train:', len(train_df), ', target:', len(target_df))
