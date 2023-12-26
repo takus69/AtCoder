@@ -32,7 +32,7 @@ def load_param(model):
     return model
 
 if __name__ == '__main__':
-    model = make_network(iter=10, train=True, verbose=False)
+    model = make_network(iter=100, train=True, verbose=False)
     train_df, target_df, score = make_data()
     r2s = []
     scores = [score]

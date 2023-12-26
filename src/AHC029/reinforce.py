@@ -83,7 +83,7 @@ class Judge:
 
 class Solver:
 
-    def __init__(self, n: int, m: int, k: int, t: int):
+    def __init__(self, n: int, m: int, k: int, t: int, train=False):
         self.n = n
         self.m = m
         self.k = k
@@ -94,6 +94,7 @@ class Solver:
         self.output_datas = []
         self.model = make_network()
         self.model = load_param(self.model)
+        self.train = train
 
     def solve(self) -> int:
         self.turn = 0
@@ -207,7 +208,7 @@ class Solver:
         self.pred = self.model.predict(np.array(input_data).reshape(1, -1))[0]
         self.pred -= np.min(self.pred)
         # ε-greedy
-        if random.random() < epsilon:
+        if random.random() < epsilon and self.train:
             self.pred = [random.random() for _ in range(20)]
 
 
