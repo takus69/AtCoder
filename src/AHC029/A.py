@@ -83,9 +83,29 @@ class Solver:
         self.cards = self.judge.read_initial_cards()
         self.projects = self.judge.read_projects()
 
-        self.cnt = 0
-        for _ in range(self.t):
-            self.cnt += 1
+        # 1回目の処理
+        self.turn += 1
+        use_card_i, use_target = self._select_action()
+        if self.cards[use_card_i].t == CardType.INVEST:
+            self.invest_level += 1
+        # example for comments
+        self.judge.comment(f"used {self.cards[use_card_i]} to target {use_target}")
+        self.judge.use_card(use_card_i, use_target)
+        assert self.invest_level <= MAX_INVEST_LEVEL
+
+        self.projects = self.judge.read_projects()
+        self.money = self.judge.read_money()
+
+        for _ in range(self.t-1):
+            # カードの選択
+            next_cards = self.judge.read_next_cards()
+            select_card_i = self._select_next_card(next_cards)
+            self.cards[use_card_i] = next_cards[select_card_i]
+            self.judge.select_card(select_card_i)
+            self.money -= next_cards[select_card_i].p
+            assert self.money >= 0
+
+            # カード、プロジェクトの選択
             use_card_i, use_target = self._select_action()
             if self.cards[use_card_i].t == CardType.INVEST:
                 self.invest_level += 1
@@ -97,14 +117,14 @@ class Solver:
             self.projects = self.judge.read_projects()
             self.money = self.judge.read_money()
 
-            next_cards = self.judge.read_next_cards()
-            select_card_i = self._select_next_card(next_cards)
-            self.cards[use_card_i] = next_cards[select_card_i]
-            self.judge.select_card(select_card_i)
-            self.money -= next_cards[select_card_i].p
-            assert self.money >= 0
-
             self.turn += 1
+        # 最後のカードの選択
+        next_cards = self.judge.read_next_cards()
+        select_card_i = 0
+        self.cards[use_card_i] = next_cards[select_card_i]
+        self.judge.select_card(select_card_i)
+        self.money -= next_cards[select_card_i].p
+        assert self.money >= 0
 
         return self.money
 
@@ -128,19 +148,33 @@ class Solver:
                 if work < card.w:
                     work = card.w
                     card_i = i
+            for i, card in can_cards.get(CardType.CANCEL_SINGLE, []):
+                card_i = i
+            # for i, card in can_cards.get(CardType.CANCEL_ALL, []):
+            #    card_i = i
         
         # プロジェクトの決定
+        project_i, project2_i = self._chose_project()
+        # print(i, self.cards, file=sys.stderr)
+        if self.cards[card_i].t == CardType.CANCEL_SINGLE:
+            project_i = project2_i
+        if self.cards[card_i].t in [CardType.INVEST, CardType.WORK_ALL, CardType.CANCEL_ALL]:
+            project_i = 0
+        return (card_i, project_i)
+
+    def _chose_project(self):
         project_i = 0
         v_h = 0
+        h_v = 0
         for i in range(self.m):
             p = self.projects[i]
             if v_h < p.v / p.h:
                 project_i = i
                 v_h = p.v / p.h
-        # print(i, self.cards, file=sys.stderr)
-        if self.cards[card_i].t in [CardType.INVEST, CardType.WORK_ALL, CardType.CANCEL_ALL]:
-            project_i = 0
-        return (card_i, project_i)
+            if h_v < p.h / p.v:
+                project2_i = i
+                h_v = p.h / p.v
+        return project_i, project2_i
 
     def _select_next_card(self, next_cards: list[Card]) -> int:
         can_cards = {}
@@ -150,7 +184,7 @@ class Solver:
                 can_cards[card.t] = can_cards.get(card.t, []) + [(i, card)]
         card_i = 0
         if CardType.INVEST in can_cards.keys() and self.invest_level < MAX_INVEST_LEVEL:
-            if can_cards[CardType.INVEST][0][1].p < 2**(self.invest_level+1)*(self.t-self.cnt):
+            if can_cards[CardType.INVEST][0][1].p < 2**(self.invest_level+1)*(self.t-self.turn):
                 card_i = can_cards[CardType.INVEST][0][0]
         else:
             w_p = 1
@@ -162,6 +196,14 @@ class Solver:
                 if 2**self.invest_level < card.w and w_p < card.w / card.p and card.w > 2*card.p:
                     w_p = card.w / card.p
                     card_i = i
+            # キャンセルカードが1円以下だと採用
+            for i, card in can_cards.get(CardType.CANCEL_SINGLE, []):
+                if card.p <= 1:
+                    card_i = i
+            # for i, card in can_cards.get(CardType.CANCEL_ALL, []):
+            #    if card.p <= 1:
+            #        card_i = i
+            
         return card_i
 
 
