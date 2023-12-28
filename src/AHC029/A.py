@@ -150,7 +150,8 @@ class Solver:
                 can_cards[card.t] = can_cards.get(card.t, []) + [(i, card)]
         card_i = 0
         if CardType.INVEST in can_cards.keys() and self.invest_level < MAX_INVEST_LEVEL:
-            card_i = can_cards[CardType.INVEST][0][0]
+            if can_cards[CardType.INVEST][0][1].p < 2**(self.invest_level+1)*(self.t-self.cnt):
+                card_i = can_cards[CardType.INVEST][0][0]
         else:
             w_p = 1
             for i, card in can_cards.get(CardType.WORK_ALL, []):
