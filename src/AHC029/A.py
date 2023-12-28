@@ -136,6 +136,7 @@ class Solver:
             can_cards[card.t] = can_cards.get(card.t, []) + [(i, card)]
         # print(can_cards, file=sys.stderr)
         card_i = 0
+        project_i, project2_i, cnt1, cnt2 = self._chose_project()
         if CardType.INVEST in can_cards.keys() and self.invest_level < MAX_INVEST_LEVEL:
             card_i = can_cards[CardType.INVEST][0][0]
         else:
@@ -149,12 +150,13 @@ class Solver:
                     work = card.w
                     card_i = i
             for i, card in can_cards.get(CardType.CANCEL_SINGLE, []):
-                card_i = i
-            # for i, card in can_cards.get(CardType.CANCEL_ALL, []):
-            #    card_i = i
+                if cnt1 <= 1:
+                    card_i = i
+            for i, card in can_cards.get(CardType.CANCEL_ALL, []):
+                if cnt1 < 1:
+                    card_i = i
         
         # プロジェクトの決定
-        project_i, project2_i = self._chose_project()
         # print(i, self.cards, file=sys.stderr)
         if self.cards[card_i].t == CardType.CANCEL_SINGLE:
             project_i = project2_i
@@ -164,17 +166,22 @@ class Solver:
 
     def _chose_project(self):
         project_i = 0
+        project2_i = 0
+        cnt1 = 0
+        cnt2 = 0
         v_h = 0
         h_v = 0
         for i in range(self.m):
             p = self.projects[i]
             if v_h < p.v / p.h:
+                cnt1 += 1
                 project_i = i
                 v_h = p.v / p.h
             if h_v < p.h / p.v:
+                cnt2 += 1
                 project2_i = i
                 h_v = p.h / p.v
-        return project_i, project2_i
+        return project_i, project2_i, cnt1, cnt2
 
     def _select_next_card(self, next_cards: list[Card]) -> int:
         can_cards = {}
@@ -188,21 +195,22 @@ class Solver:
                 card_i = can_cards[CardType.INVEST][0][0]
         else:
             w_p = 1
+            project_i, project2_i, cnt1, cnt2 = self._chose_project()
             for i, card in can_cards.get(CardType.WORK_ALL, []):
                 if 2**self.invest_level < card.w*self.m and w_p < card.w*self.m / card.p and card.w*self.m > 2*card.p:
                     w_p = card.w*self.m / card.p
                     card_i = i
             for i, card in can_cards[CardType.WORK_SINGLE][1:]:
-                if 2**self.invest_level < card.w and w_p < card.w / card.p and card.w > 2*card.p:
+                if 2**self.invest_level < card.w and w_p < card.w / card.p and card.w > 2*card.p and self.projects[project_i].h > card.p:
                     w_p = card.w / card.p
                     card_i = i
             # キャンセルカードが1円以下だと採用
             for i, card in can_cards.get(CardType.CANCEL_SINGLE, []):
-                if card.p <= 1:
+                if card.p <= 1 and cnt1 <= 1 and self.turn < 800:
                     card_i = i
-            # for i, card in can_cards.get(CardType.CANCEL_ALL, []):
-            #    if card.p <= 1:
-            #        card_i = i
+            for i, card in can_cards.get(CardType.CANCEL_ALL, []):
+                if card.p <= 1 and cnt1 < 1 and self.turn < 800:
+                    card_i = i
             
         return card_i
 
