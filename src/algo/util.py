@@ -1,5 +1,5 @@
 def gcd(x, y):
-    '''ユークリッド互除法'''
+    '''ユークリッド互除法(math.gcd)'''
     if x < y:
         x, y = y, x
     if y == 0:
@@ -22,6 +22,20 @@ def primes(n):
             is_prime[j] = False
     return [i for i in range(n+1) if is_prime[i]]
 
+def prime_factorization(n):
+    '''素因数分解'''
+    primes = {}
+    i = 2
+    while i*i <= n:
+        if n%i==0:
+            n //= i
+            primes[i] = primes.get(i, 0)+1
+        else:
+            i += 1
+    if n > 1:
+        primes[n] = primes.get(n, 0)+1
+    return primes
+
 
 if __name__ == '__main__':
     msg = 'test for gcd'
@@ -31,3 +45,8 @@ if __name__ == '__main__':
     msg = 'test for primes'
     assert primes(6) == [2, 3, 5], msg
     assert primes(20) == [2, 3, 5, 7, 11, 13, 17, 19], msg
+
+    msg = 'test for prime factorization'
+    assert prime_factorization(6) == {2:1, 3:1}
+    assert prime_factorization(12) == {2:2, 3:1}
+    assert prime_factorization(8) == {2:3}
