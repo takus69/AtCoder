@@ -75,6 +75,7 @@ class Solver:
         self.k = k
         self.t = t
         self.judge = Judge(n, m, k)
+        self.next_cards = None
 
     def solve(self) -> int:
         self.turn = 0
@@ -83,52 +84,53 @@ class Solver:
         self.cards = self.judge.read_initial_cards()
         self.projects = self.judge.read_projects()
 
-        # 1回目の処理
-        self.turn += 1
-        use_card_i, use_target = self._select_action()
-        if self.cards[use_card_i].t == CardType.INVEST:
-            self.invest_level += 1
-        # example for comments
-        self.judge.comment(f"used {self.cards[use_card_i]} to target {use_target}")
-        self.judge.use_card(use_card_i, use_target)
-        assert self.invest_level <= MAX_INVEST_LEVEL
-
-        self.projects = self.judge.read_projects()
-        self.money = self.judge.read_money()
-
-        for _ in range(self.t-1):
-            # カードの選択
-            next_cards = self.judge.read_next_cards()
-            select_card_i = self._select_next_card(next_cards)
-            self.cards[use_card_i] = next_cards[select_card_i]
-            self.judge.select_card(select_card_i)
-            self.money -= next_cards[select_card_i].p
-            assert self.money >= 0
-
-            # カード、プロジェクトの選択
-            use_card_i, use_target = self._select_action()
-            if self.cards[use_card_i].t == CardType.INVEST:
-                self.invest_level += 1
-            # example for comments
-            self.judge.comment(f"used {self.cards[use_card_i]} to target {use_target}")
-            self.judge.use_card(use_card_i, use_target)
-            assert self.invest_level <= MAX_INVEST_LEVEL
-
-            self.projects = self.judge.read_projects()
-            self.money = self.judge.read_money()
-
-            self.turn += 1
-        # 最後のカードの選択
-        next_cards = self.judge.read_next_cards()
-        select_card_i = 0
-        self.cards[use_card_i] = next_cards[select_card_i]
-        self.judge.select_card(select_card_i)
-        self.money -= next_cards[select_card_i].p
-        assert self.money >= 0
+        for _ in range(self.t):
+            self._play(self.judge)
+        # 最後のカードは無償を選択
+        self.judge.select_card(0)
 
         return self.money
 
-    def _select_action(self) -> tuple[int, int]:
+    def _play(self, judge):
+        self.turn += 1
+        # 行動の決定
+        select_card_i, use_card_i, use_target = self._select_action()
+        self.judge.comment(f'turn: {self.turn}, (r, c, m)=({select_card_i}, {use_card_i}, {use_target})')
+
+        # カードの選択
+        if select_card_i >= 0:
+            judge.select_card(select_card_i)
+
+        # カード、プロジェクトの選択
+        if self.cards[use_card_i].t == CardType.INVEST:
+            self.invest_level += 1
+        judge.use_card(use_card_i, use_target)
+
+        self.projects = judge.read_projects()
+        self.money = judge.read_money()
+        self.next_cards = judge.read_next_cards()
+        self.pre_use_card_i = use_card_i
+
+    def _select_action(self) -> tuple[int, int, int]:
+        # 補充するカードの選択
+        if self.next_cards is not None:
+            eval = 0
+            select_card_i = 0
+            for i in range(self.k):
+                card = self.next_cards[i]
+                if card.p <= self.money:
+                    eval2 = self._eval_state(card)
+                    self.judge.comment(f'{select_card_i}: {eval}, {i}: {eval2}')
+                    if eval < eval2:
+                        eval = eval2
+                        select_card_i = i
+        else:
+            select_card_i = -1
+        if select_card_i >= 0:
+            self.cards[self.pre_use_card_i] = self.next_cards[select_card_i]
+            self.money -= self.next_cards[select_card_i].p
+
+        # 使用するコードとプロジェクトの選択
         eval = 0
         use_card_i, use_target = 0, 0
         for c in range(self.n):
@@ -140,26 +142,26 @@ class Solver:
                     eval = eval2
         if self.cards[use_card_i].t in [CardType.INVEST, CardType.WORK_ALL, CardType.CANCEL_ALL]:
             use_target = 0
-        return (use_card_i, use_target)
+        return (select_card_i, use_card_i, use_target)
     
     def _eval_action(self, c: int, m: int):
         card = self.cards[c]
         project = self.projects[m]
-        return min(card.w, project.h)
-
-    def _select_next_card(self, next_cards: list[Card]) -> int:
         eval = 0
-        select_card_i = 0
-        for i in range(self.k):
-            card = next_cards[i]
-            eval2 = self._eval_state(card)
-            if eval < eval2:
-                eval = eval2
-                select_card_i = 0
-        return select_card_i
+        if card.t == CardType.WORK_SINGLE:
+            eval = min(card.w, project.h)
+        elif card.t == CardType.WORK_ALL:
+            for p in self.projects:
+                eval += min(card.w, p.h)
+        return eval
 
     def _eval_state(self, r: Card):
-        return self.money + r.w
+        eval = 0
+        if r.t == CardType.WORK_SINGLE:
+            eval = r.w - r.p
+        elif r.t == CardType.WORK_ALL:
+            eval = r.w * self.m - r.p
+        return self.money + eval
 
 
 def main():
