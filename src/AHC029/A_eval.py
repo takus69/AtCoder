@@ -1,9 +1,13 @@
 from dataclasses import dataclass
 from enum import Enum
-import sys
+import random
+from random import randint, gauss
 
 MAX_INVEST_LEVEL = 20
 
+
+def clamp(v, min_v, max_v):
+    return max(min_v, min(v, max_v))
 
 @dataclass
 class Project:
@@ -65,6 +69,73 @@ class Judge:
 
     def comment(self, message: str) -> None:
         print(f"# {message}")
+
+class MockJudge(Judge):
+    def __init__(self, n: int, m: int, k: int, L: int):
+        self.n = n
+        self.m = m
+        self.k = k
+        self.L = L
+        self.set_x(randint(1, 20), randint(1, 10), randint(1, 10), randint(1, 5), randint(1, 3))
+
+    def set_x(self, x0, x1, x2, x3, x4):
+        self.x = [x0, x1, x2, x3, x4]
+        sum_x = sum(self.x)
+        pre_x = 0
+        for i in range(len(self.x)):
+            pre_x += self.x[i]
+            self.x[i] = pre_x/sum_x
+
+    def read_projects(self) -> list[Project]:
+        projects = []
+        for _ in range(self.m):
+            projects.append(self.create_project())
+        return projects
+
+    def create_project(self) -> Project:
+        b = random.uniform(2, 8)
+        h = round(2**b)*(2**self.L)
+        v = round(2**clamp(gauss(b, 0.5), 0, 10))*(2**self.L)
+        return Project(h, v)
+
+    def read_next_cards(self) -> list[Card]:
+        cards = [Card(CardType(0), 2**self.L, 0)]
+        for _ in range(self.k-1):
+            cards.append(self.create_card())
+        return cards
+
+    def create_card(self) -> Card:
+        r = random.random()
+        pre = 0
+        for i in range(5):
+            if pre <= r < self.x[i]:
+                t = i
+                break
+            pre = self.x[i]
+        if t == 0 or t == 1:
+            w = randint(1, 50)*(2**self.L)
+        else:
+            w = 0
+        if t == 0:
+            w2 = w/(2**self.L)
+            p = clamp(round(gauss(w2, w2/3)), 1, 10000)
+        elif t == 1:
+            w2 = self.m*w/(2**self.L)
+            p = clamp(round(gauss(w2, w2/3)), 1, 10000)
+        elif t == 2 or t == 3:
+            p = randint(0, 10)*(2**self.L)
+        elif t == 4:
+            p = randint(200, 1000)*(2**self.L)
+        return Card(CardType(t), w, p)
+
+    def read_money(slef) -> int:
+        None
+
+    def use_card(self, c: int, m: int) -> None:
+        None
+
+    def select_card(self, r: int) -> None:
+        None
 
 
 class Solver:
