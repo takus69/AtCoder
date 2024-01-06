@@ -36,12 +36,10 @@ for _ in range(M):
     if A[u-1] == A[v-1]:
         uf.unite(u, v)
     # print(u, v, vp)
-    #if A[u-1] > A[v-1]:
-    #    u, v = v, u
+    if A[u-1] > A[v-1]:
+        u, v = v, u
     vp[A[u-1]] = vp.get(A[u-1], [])
     vp[A[u-1]].append((u, v))
-    vp[A[v-1]] = vp.get(A[v-1], [])
-    vp[A[v-1]].append((v, u))
 # print(vp)
 dp = {uf.root(1): 1}  # 頂点iにいる時の最大の種類数
 for a in sorted(vp.keys()):
