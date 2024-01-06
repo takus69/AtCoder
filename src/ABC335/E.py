@@ -30,47 +30,26 @@ N, M = map(int, input().split())
 A = list(map(int, input().split()))
 # 同じ値で連結している場合をUnionFindで管理
 uf = UnionFind(N+1)
-uv = []
+vp = {}
 for _ in range(M):
     u, v = map(int, input().split())
     if A[u-1] == A[v-1]:
-        if uf.root(u) == 1:
-            u, v = v, u
         uf.unite(u, v)
-    uv.append((u, v))
-E = {i: [] for i in range(1, N+1)}
-for u, v in uv:
-    u = uf.root(u)
-    v = uf.root(v)
-    if u == v:
-        continue
-    E[u].append(v)
-    E[v].append(u)
-# for k, v in E.items():
-#     E[k] = list(set(E[k]))
-# print(E)
-
-cnt = 0
-dp = {1: 1}  # 頂点iにいる時の最大の種類数
-q = Queue()
-pre = uf.root(1)
-for v in E[1]:
-    v = uf.root(v)
-    if v != 1 and v != pre and A[pre-1] < A[v-1]:
-        cnt += 1
-        q.put((1, v))
-while not q.empty():
-    pre, u = q.get()
-    u = uf.root(u)
-    if A[pre-1] < A[u-1]:
-        dp[u] = max(dp[pre]+1, dp.get(u, 0))
-    else:
-        dp[u] = dp.get(u, 0)
-
-    # 次のキューを入れる
-    for v in E[u]:
-        if v != u and v != pre and A[u-1] < A[v-1]:
-            cnt += 1
-            q.put((u, v))
-# print(dp, uf.root(N), cnt)
+    # print(u, v, vp)
+    #if A[u-1] > A[v-1]:
+    #    u, v = v, u
+    vp[A[u-1]] = vp.get(A[u-1], [])
+    vp[A[u-1]].append((u, v))
+    vp[A[v-1]] = vp.get(A[v-1], [])
+    vp[A[v-1]].append((v, u))
+# print(vp)
+dp = {uf.root(1): 1}  # 頂点iにいる時の最大の種類数
+for a in sorted(vp.keys()):
+    for u, v in vp[a]:
+        u = uf.root(u)
+        v = uf.root(v)
+        if A[u-1] < A[v-1] and dp.get(u, 0) > 0:
+            dp[v] = max(dp.get(u, 0)+1, dp.get(v, 0))
+            # print(u, v, A[u-1], A[v-1], dp)
+# print(dp)
 print(dp.get(uf.root(N), 0))
