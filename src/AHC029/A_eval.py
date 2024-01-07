@@ -38,7 +38,7 @@ class Judge:
         self.k = k
         self.L = 0
         self.money = 0
-        self.pre_use_card_i = None
+        self.pre_use_card_i = -1
 
     def read_initial_cards(self) -> list[Card]:
         self.cards = []
@@ -95,7 +95,6 @@ class Judge:
             print(r, flush=True)
         self.cards[self.pre_use_card_i] = self.next_cards[r]
         self.money -= self.next_cards[r].p
-        self.pre_use_card_i = r
 
     def comment(self, message: str) -> None:
         print(f"# {message}")
@@ -191,8 +190,9 @@ class Solver:
             actions = self._select_action()
             money = self._simulate(actions)
             self.money = self._play(self.judge, actions)
+            self.judge.comment(f'actions: select card: {actions[0]}, use card: {actions[1]}, project: {actions[2]}')
             self.judge.comment(f'turn: {self.turn}, simulate money: {money}, momney: {self.money}')
-            # assert money == self.money
+            assert money == self.money
         # 最後のカードは無償を選択
         self.judge.select_card(0)
 
@@ -240,7 +240,9 @@ class Solver:
 
     def _simulate(self, actions):
         mock = self._clone()
+        self.judge.comment(f'clone money: {mock.money}')
         score = mock._play(mock.judge, actions)
+        self.judge.comment(f'clone play money: {mock.money}')
         return score
 
     def _select_action(self) -> tuple[int, int, int]:
@@ -272,7 +274,6 @@ class Solver:
             select_card_i = -1
         if select_card_i >= 0:
             self.cards[self.pre_use_card_i] = self.next_cards[select_card_i]
-            self.money -= self.next_cards[select_card_i].p
 
         # 使用するコードとプロジェクトの選択
         eval = 0
