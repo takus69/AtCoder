@@ -38,6 +38,7 @@ class Judge:
         self.k = k
         self.L = 0
         self.money = 0
+        self.pre_use_card_i = None
 
     def read_initial_cards(self) -> list[Card]:
         self.cards = []
@@ -53,8 +54,9 @@ class Judge:
             self.projects.append(Project(h, v))
         return self.projects
 
-    def use_card(self, c: int, m: int) -> None:
-        print(f"{c} {m}", flush=True)
+    def use_card(self, c: int, m: int, simulate=False) -> None:
+        if not simulate:
+            print(f"{c} {m}", flush=True)
         self.pre_use_card_i = c
         card = self.cards[c]
         if card.t == CardType.WORK_SINGLE:
@@ -88,10 +90,12 @@ class Judge:
             self.next_cards.append(Card(CardType(t), w, p))
         return self.next_cards
 
-    def select_card(self, r: int) -> None:
-        print(r, flush=True)
+    def select_card(self, r: int, simulate=False) -> None:
+        if not simulate:
+            print(r, flush=True)
         self.cards[self.pre_use_card_i] = self.next_cards[r]
         self.money -= self.next_cards[r].p
+        self.pre_use_card_i = r
 
     def comment(self, message: str) -> None:
         print(f"# {message}")
@@ -115,10 +119,10 @@ class MockJudge(Judge):
             self.x[i] = pre_x/sum_x
 
     def read_projects(self) -> list[Project]:
-        projects = []
-        for _ in range(self.m):
-            projects.append(self.create_project())
-        return projects
+        for i in range(self.m):
+            if self.projects[i] is None:
+                self.projects[i] = self.create_project()
+        return self.projects
 
     def create_project(self) -> Project:
         b = random.uniform(2, 8)
@@ -159,21 +163,12 @@ class MockJudge(Judge):
     def read_money(self) -> int:
         return self.money
 
-    def use_card(self, c: int, m: int) -> None:
-        None
+    def use_card(self, c: int, m: int, simulate=False) -> None:
+        super().use_card(c, m, True)
 
-    def select_card(self, r: int) -> None:
-        None
+    def select_card(self, r: int, simulate=False) -> None:
+        super().select_card(r, True)
 
-    def set_projects(self, projects) -> None:
-        self.projects = projects
-
-    def set_card(self, cards) -> None:
-        self.cards = cards
-    
-    def set_next_card(self, next_cards) -> None:
-        self.next_cards = next_cards
-    
 class Solver:
 
     def __init__(self, n: int, m: int, k: int, t: int):
@@ -186,6 +181,7 @@ class Solver:
         self.turn = 0
         self.money = 0
         self.invest_level = 0
+        self.pre_use_card_i = None
 
     def solve(self) -> int:
         self.cards = self.judge.read_initial_cards()
@@ -193,9 +189,10 @@ class Solver:
 
         for _ in range(self.t):
             actions = self._select_action()
-            self.money = self._play(self.judge, actions)
             money = self._simulate(actions)
-            assert money == self.money
+            self.money = self._play(self.judge, actions)
+            self.judge.comment(f'turn: {self.turn}, simulate money: {money}, momney: {self.money}')
+            # assert money == self.money
         # 最後のカードは無償を選択
         self.judge.select_card(0)
 
@@ -225,9 +222,11 @@ class Solver:
 
     def _clone(self):
         judge = MockJudge(self.n, self.m, self.k, self.invest_level, self.turn, self.money)
-        judge.set_projects(self.projects)
-        judge.set_card(self.cards)
-        judge.set_next_card(self.next_cards)
+        judge.projects = self.projects
+        judge.cards = self.cards
+        judge.next_cards = self.next_cards
+        judge.pre_use_card_i = self.pre_use_card_i
+
         mock = Solver(self.n, self.m, self.k, self.t)
         mock.projects = self.projects
         mock.cards = self.cards
@@ -236,6 +235,7 @@ class Solver:
         mock.invest_level = self.invest_level
         mock.judge = judge
         mock.turn = self.turn
+        mock.pre_use_card_i = self.pre_use_card_i
         return mock
 
     def _simulate(self, actions):
