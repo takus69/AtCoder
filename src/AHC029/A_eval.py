@@ -183,17 +183,19 @@ class Solver:
         self.t = t
         self.judge = Judge(n, m, k)
         self.next_cards = None
-
-    def solve(self) -> int:
         self.turn = 0
         self.money = 0
         self.invest_level = 0
+
+    def solve(self) -> int:
         self.cards = self.judge.read_initial_cards()
         self.projects = self.judge.read_projects()
 
         for _ in range(self.t):
             actions = self._select_action()
-            self._play(self.judge, actions)
+            self.money = self._play(self.judge, actions)
+            money = self._simulate(actions)
+            assert money == self.money
         # 最後のカードは無償を選択
         self.judge.select_card(0)
 
@@ -222,17 +224,23 @@ class Solver:
         return self.money
 
     def _clone(self):
-        mock = Solver(self.n, self.m, self.k, self.t)
         judge = MockJudge(self.n, self.m, self.k, self.invest_level, self.turn, self.money)
         judge.set_projects(self.projects)
         judge.set_card(self.cards)
         judge.set_next_card(self.next_cards)
+        mock = Solver(self.n, self.m, self.k, self.t)
+        mock.projects = self.projects
+        mock.cards = self.cards
+        mock.next_cards = self.next_cards
+        mock.money = self.money
+        mock.invest_level = self.invest_level
         mock.judge = judge
+        mock.turn = self.turn
         return mock
 
     def _simulate(self, actions):
         mock = self._clone()
-        score = mock._play(actions)
+        score = mock._play(mock.judge, actions)
         return score
 
     def _select_action(self) -> tuple[int, int, int]:
