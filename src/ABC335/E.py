@@ -30,7 +30,13 @@ N, M = map(int, input().split())
 A = list(map(int, input().split()))
 # 同じ値で連結している場合をUnionFindで管理
 uf = UnionFind(N+1)
-vp = {}
+target = [1]
+for i, a in sorted(enumerate(A), key=lambda x: x[1]):
+    if a < A[0] or i == 0:
+        continue
+    target.append(i+1)
+
+E = {i+1: [] for i in range(N)}
 for _ in range(M):
     u, v = map(int, input().split())
     if A[u-1] == A[v-1]:
@@ -38,12 +44,11 @@ for _ in range(M):
     # print(u, v, vp)
     if A[u-1] > A[v-1]:
         u, v = v, u
-    vp[A[u-1]] = vp.get(A[u-1], [])
-    vp[A[u-1]].append((u, v))
+    E[u].append(v)
 # print(vp)
 dp = {uf.root(1): 1}  # 頂点iにいる時の最大の種類数
-for a in sorted(vp.keys()):
-    for u, v in vp[a]:
+for u in target:
+    for v in E[u]:
         u = uf.root(u)
         v = uf.root(v)
         if A[u-1] < A[v-1] and dp.get(u, 0) > 0:
