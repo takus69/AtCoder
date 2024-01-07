@@ -36,46 +36,74 @@ class Judge:
         self.n = n
         self.m = m
         self.k = k
+        self.L = 0
+        self.money = 0
 
     def read_initial_cards(self) -> list[Card]:
-        cards = []
+        self.cards = []
         for _ in range(self.n):
             t, w = map(int, input().split())
-            cards.append(Card(CardType(t), w, 0))
-        return cards
+            self.cards.append(Card(CardType(t), w, 0))
+        return self.cards
 
     def read_projects(self) -> list[Project]:
-        projects = []
+        self.projects = []
         for _ in range(self.m):
             h, v = map(int, input().split())
-            projects.append(Project(h, v))
-        return projects
+            self.projects.append(Project(h, v))
+        return self.projects
 
     def use_card(self, c: int, m: int) -> None:
         print(f"{c} {m}", flush=True)
+        self.pre_use_card_i = c
+        card = self.cards[c]
+        if card.t == CardType.WORK_SINGLE:
+            self.projects[m].h = max(self.projects[m].h-self.cards[c].w, 0)
+            if self.projects[m].h == 0:
+                self.money += self.projects[m].v
+                self.projects[m] = None
+        elif card.t == CardType.WORK_ALL:
+            for i in range(self.m):
+                self.projects[i].h = max(self.projects[i].h-self.cards[c].w, 0)
+                if self.projects[i].h == 0:
+                    self.money += self.projects[i].v
+                    self.projects[i] = None
+        elif card.t == CardType.INVEST:
+            self.L += 1
+            assert self.L <= MAX_INVEST_LEVEL
+        elif card.t == CardType.CANCEL_SINGLE:
+            self.projects[m] = None
+        elif card.t == CardType.CANCEL_ALL:
+            for i in range(self.m):
+                self.projects[i] = None
 
     def read_money(self) -> int:
-        return int(input())
+        self.money = int(input())
+        return self.money
 
     def read_next_cards(self) -> list[Card]:
-        cards = []
+        self.next_cards = []
         for _ in range(self.k):
             t, w, p = map(int, input().split())
-            cards.append(Card(CardType(t), w, p))
-        return cards
+            self.next_cards.append(Card(CardType(t), w, p))
+        return self.next_cards
 
     def select_card(self, r: int) -> None:
         print(r, flush=True)
+        self.cards[self.pre_use_card_i] = self.next_cards[r]
+        self.money -= self.next_cards[r].p
 
     def comment(self, message: str) -> None:
         print(f"# {message}")
 
 class MockJudge(Judge):
-    def __init__(self, n: int, m: int, k: int, L: int):
+    def __init__(self, n: int, m: int, k: int, L: int, turn: int, money: int):
         self.n = n
         self.m = m
         self.k = k
         self.L = L
+        self.turn = turn
+        self.money = money
         self.set_x(randint(1, 20), randint(1, 10), randint(1, 10), randint(1, 5), randint(1, 3))
 
     def set_x(self, x0, x1, x2, x3, x4):
@@ -128,8 +156,8 @@ class MockJudge(Judge):
             p = randint(200, 1000)*(2**self.L)
         return Card(CardType(t), w, p)
 
-    def read_money(slef) -> int:
-        None
+    def read_money(self) -> int:
+        return self.money
 
     def use_card(self, c: int, m: int) -> None:
         None
@@ -137,7 +165,15 @@ class MockJudge(Judge):
     def select_card(self, r: int) -> None:
         None
 
+    def set_projects(self, projects) -> None:
+        self.projects = projects
 
+    def set_card(self, cards) -> None:
+        self.cards = cards
+    
+    def set_next_card(self, next_cards) -> None:
+        self.next_cards = next_cards
+    
 class Solver:
 
     def __init__(self, n: int, m: int, k: int, t: int):
@@ -156,16 +192,18 @@ class Solver:
         self.projects = self.judge.read_projects()
 
         for _ in range(self.t):
-            self._play(self.judge)
+            actions = self._select_action()
+            self._play(self.judge, actions)
         # 最後のカードは無償を選択
         self.judge.select_card(0)
 
         return self.money
 
-    def _play(self, judge):
+    def _play(self, judge, actions):
         self.turn += 1
         # 行動の決定
-        select_card_i, use_card_i, use_target = self._select_action()
+        # select_card_i, use_card_i, use_target = self._select_action()
+        select_card_i, use_card_i, use_target = actions
         self.judge.comment(f'turn: {self.turn}, (r, c, m)=({select_card_i}, {use_card_i}, {use_target})')
 
         # カードの選択
@@ -181,8 +219,35 @@ class Solver:
         self.money = judge.read_money()
         self.next_cards = judge.read_next_cards()
         self.pre_use_card_i = use_card_i
+        return self.money
+
+    def _clone(self):
+        mock = Solver(self.n, self.m, self.k, self.t)
+        judge = MockJudge(self.n, self.m, self.k, self.invest_level, self.turn, self.money)
+        judge.set_projects(self.projects)
+        judge.set_card(self.cards)
+        judge.set_next_card(self.next_cards)
+        mock.judge = judge
+        return mock
+
+    def _simulate(self, actions):
+        mock = self._clone()
+        score = mock._play(actions)
+        return score
 
     def _select_action(self) -> tuple[int, int, int]:
+        '''
+        score = 0
+        actions = (0, 0, 0)
+        for r in range(self.k):
+            for c in range(self.n):
+                for m in range(self.m):
+                    tmp_score = self._simulate((r, c, m))
+                    if tmp_score > score:
+                        score = tmp_score
+                        actions = (r, c, m)
+        return actions
+        '''
         # 補充するカードの選択
         if self.next_cards is not None:
             eval = 0
