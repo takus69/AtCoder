@@ -187,14 +187,10 @@ class Solver:
         self.projects = self.judge.read_projects()
 
         for _ in range(self.t):
-            self.judge.comment(f'cards: {self.cards}')
-            self.judge.comment(f'cards: {self.judge.cards}')
             actions = self._select_action(True)
             self.judge.comment(f'turn: {self.turn}, (r, c, m)={actions}')
-            self.judge.comment(f'cards: {self.cards}')
-            self.judge.comment(f'cards: {self.judge.cards}')
             # money = self._simulate(actions)
-            self.money = self._play(self.judge, actions)
+            self._play(self.judge, actions)
             # self.judge.comment(f'actions: select card: {actions[0]}, use card: {actions[1]}, project: {actions[2]}')
             # self.judge.comment(f'turn: {self.turn}, simulate money: {money}, momney: {self.money}')
             # assert money == self.money
@@ -222,7 +218,7 @@ class Solver:
         self.money = judge.read_money()
         self.next_cards = judge.read_next_cards()
         self.pre_use_card_i = use_card_i
-        return self.money
+        return self._eval_state()
 
     def _clone(self):
         judge = MockJudge(self.n, self.m, self.k, self.invest_level, self.turn, self.money)
@@ -250,13 +246,14 @@ class Solver:
 
     def _simulate(self, actions):
         mock = self._clone()
-        self.judge.comment(f'simulate start: actions: {actions}, use_card: {self.cards[actions[1]]}')
         score = mock._play(mock.judge, actions)
+        '''
         for _ in range(5):
             actions = mock._select_action(False)
-            self.judge.comment(f'simulute turn {mock.turn}: actions: {actions}, use_card: {mock.cards[actions[1]]}')
+            # self.judge.comment(f'simulute turn {mock.turn}: actions: {actions}, use_card: {mock.cards[actions[1]]}')
             score = mock._play(mock.judge, actions)
-        self.judge.comment(f'simulate end: turn: {mock.turn}')
+        # self.judge.comment(f'simulate end: turn: {mock.turn}')
+        '''
         return score
 
     def _select_action(self, simulate=False) -> tuple[int, int, int]:
@@ -279,12 +276,12 @@ class Solver:
                     else:
                         m_list = [0]
                     for m in m_list:
-                        self.judge.comment(f'simulate start actions: ({r}, {c}, {m})')
+                        self.judge.comment(f'simulate start actions: ({r}, {c}, {m}), use_card: {self.cards[c]}')
                         tmp_score = self._simulate((r, c, m))
                         if tmp_score > score:
                             score = tmp_score
                             actions = (r, c, m)
-                            self.judge.comment(f'simulate update score: {score}, actions: ({r}, {c}, {m})')
+                            self.judge.comment(f'simulate update score: {score}, actions: ({r}, {c}, {m}, use_card: {self.cards[c]})')
             return actions
         else:
             # 補充するカードの選択
@@ -294,7 +291,7 @@ class Solver:
                 for i in range(self.k):
                     card = self.next_cards[i]
                     if card.p <= self.money:
-                        eval2 = self._eval_state(card)
+                        eval2 = self._eval_card(card)
                         if eval < eval2:
                             eval = eval2
                             select_card_i = i
@@ -328,13 +325,18 @@ class Solver:
                 eval += min(card.w, p.h)
         return eval
 
-    def _eval_state(self, r: Card):
+    def _eval_card(self, r: Card):
         eval = 0
         if r.t == CardType.WORK_SINGLE:
             eval = r.w - r.p
         elif r.t == CardType.WORK_ALL:
             eval = r.w * self.m - r.p
         return self.money + eval
+
+    def _eval_state(self) -> int:
+        eval = self.money
+        eval += self.money*(self.t-self.turn)/self.t*2**self.invest_level
+        return eval
 
 
 def main():
