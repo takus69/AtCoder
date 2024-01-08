@@ -130,10 +130,10 @@ class MockJudge(Judge):
         return Project(h, v)
 
     def read_next_cards(self) -> list[Card]:
-        cards = [Card(CardType(0), 2**self.L, 0)]
+        self.next_cards = [Card(CardType(0), 2**self.L, 0)]
         for _ in range(self.k-1):
-            cards.append(self.create_card())
-        return cards
+            self.next_cards.append(self.create_card())
+        return self.next_cards
 
     def create_card(self) -> Card:
         r = random.random()
@@ -187,12 +187,17 @@ class Solver:
         self.projects = self.judge.read_projects()
 
         for _ in range(self.t):
-            actions = self._select_action()
-            money = self._simulate(actions)
+            self.judge.comment(f'cards: {self.cards}')
+            self.judge.comment(f'cards: {self.judge.cards}')
+            actions = self._select_action(True)
+            self.judge.comment(f'turn: {self.turn}, (r, c, m)={actions}')
+            self.judge.comment(f'cards: {self.cards}')
+            self.judge.comment(f'cards: {self.judge.cards}')
+            # money = self._simulate(actions)
             self.money = self._play(self.judge, actions)
-            self.judge.comment(f'actions: select card: {actions[0]}, use card: {actions[1]}, project: {actions[2]}')
-            self.judge.comment(f'turn: {self.turn}, simulate money: {money}, momney: {self.money}')
-            assert money == self.money
+            # self.judge.comment(f'actions: select card: {actions[0]}, use card: {actions[1]}, project: {actions[2]}')
+            # self.judge.comment(f'turn: {self.turn}, simulate money: {money}, momney: {self.money}')
+            # assert money == self.money
         # 最後のカードは無償を選択
         self.judge.select_card(0)
 
@@ -203,7 +208,6 @@ class Solver:
         # 行動の決定
         # select_card_i, use_card_i, use_target = self._select_action()
         select_card_i, use_card_i, use_target = actions
-        self.judge.comment(f'turn: {self.turn}, (r, c, m)=({select_card_i}, {use_card_i}, {use_target})')
 
         # カードの選択
         if select_card_i >= 0:
@@ -222,15 +226,21 @@ class Solver:
 
     def _clone(self):
         judge = MockJudge(self.n, self.m, self.k, self.invest_level, self.turn, self.money)
-        judge.projects = self.projects
-        judge.cards = self.cards
-        judge.next_cards = self.next_cards
+        judge.projects = [p for p in self.projects]
+        judge.cards = [c for c in self.cards]
+        if self.next_cards is None:
+            judge.next_cards = None
+        else:
+            judge.next_cards = [c for c in self.next_cards]
         judge.pre_use_card_i = self.pre_use_card_i
 
         mock = Solver(self.n, self.m, self.k, self.t)
-        mock.projects = self.projects
-        mock.cards = self.cards
-        mock.next_cards = self.next_cards
+        mock.projects = [p for p in self.projects]
+        mock.cards = [c for c in self.cards]
+        if self.next_cards is None:
+            mock.next_cards = None
+        else:
+            mock.next_cards = [c for c in self.next_cards]
         mock.money = self.money
         mock.invest_level = self.invest_level
         mock.judge = judge
@@ -240,54 +250,72 @@ class Solver:
 
     def _simulate(self, actions):
         mock = self._clone()
-        self.judge.comment(f'clone money: {mock.money}')
+        self.judge.comment(f'simulate start: actions: {actions}, use_card: {self.cards[actions[1]]}')
         score = mock._play(mock.judge, actions)
-        self.judge.comment(f'clone play money: {mock.money}')
+        for _ in range(5):
+            actions = mock._select_action(False)
+            self.judge.comment(f'simulute turn {mock.turn}: actions: {actions}, use_card: {mock.cards[actions[1]]}')
+            score = mock._play(mock.judge, actions)
+        self.judge.comment(f'simulate end: turn: {mock.turn}')
         return score
 
-    def _select_action(self) -> tuple[int, int, int]:
-        '''
-        score = 0
-        actions = (0, 0, 0)
-        for r in range(self.k):
+    def _select_action(self, simulate=False) -> tuple[int, int, int]:
+        if simulate:
+            score = 0
+            actions = (0, 0, 0)
+            r_list = []
+            if self.next_cards is None:
+                r_list.append(-1)
+            else:
+                for i in range(self.k):
+                    if self.next_cards[i].p <= self.money:
+                        r_list.append(i)
+            for r in r_list:
+                if r >= 0:
+                    self.cards[self.pre_use_card_i] = self.next_cards[r]
+                for c in range(self.n):
+                    if self.cards[c].t in [CardType.CANCEL_SINGLE, CardType.WORK_SINGLE]:
+                        m_list = range(self.m)
+                    else:
+                        m_list = [0]
+                    for m in m_list:
+                        self.judge.comment(f'simulate start actions: ({r}, {c}, {m})')
+                        tmp_score = self._simulate((r, c, m))
+                        if tmp_score > score:
+                            score = tmp_score
+                            actions = (r, c, m)
+                            self.judge.comment(f'simulate update score: {score}, actions: ({r}, {c}, {m})')
+            return actions
+        else:
+            # 補充するカードの選択
+            if self.next_cards is not None:
+                eval = 0
+                select_card_i = 0
+                for i in range(self.k):
+                    card = self.next_cards[i]
+                    if card.p <= self.money:
+                        eval2 = self._eval_state(card)
+                        if eval < eval2:
+                            eval = eval2
+                            select_card_i = i
+            else:
+                select_card_i = -1
+            if select_card_i >= 0:
+                self.cards[self.pre_use_card_i] = self.next_cards[select_card_i]
+
+            # 使用するコードとプロジェクトの選択
+            eval = 0
+            use_card_i, use_target = 0, 0
             for c in range(self.n):
                 for m in range(self.m):
-                    tmp_score = self._simulate((r, c, m))
-                    if tmp_score > score:
-                        score = tmp_score
-                        actions = (r, c, m)
-        return actions
-        '''
-        # 補充するカードの選択
-        if self.next_cards is not None:
-            eval = 0
-            select_card_i = 0
-            for i in range(self.k):
-                card = self.next_cards[i]
-                if card.p <= self.money:
-                    eval2 = self._eval_state(card)
-                    self.judge.comment(f'{select_card_i}: {eval}, {i}: {eval2}')
+                    eval2 = self._eval_action(c, m)
                     if eval < eval2:
+                        use_card_i = c
+                        use_target = m
                         eval = eval2
-                        select_card_i = i
-        else:
-            select_card_i = -1
-        if select_card_i >= 0:
-            self.cards[self.pre_use_card_i] = self.next_cards[select_card_i]
-
-        # 使用するコードとプロジェクトの選択
-        eval = 0
-        use_card_i, use_target = 0, 0
-        for c in range(self.n):
-            for m in range(self.m):
-                eval2 = self._eval_action(c, m)
-                if eval < eval2:
-                    use_card_i = c
-                    use_target = m
-                    eval = eval2
-        if self.cards[use_card_i].t in [CardType.INVEST, CardType.WORK_ALL, CardType.CANCEL_ALL]:
-            use_target = 0
-        return (select_card_i, use_card_i, use_target)
+            if self.cards[use_card_i].t in [CardType.INVEST, CardType.WORK_ALL, CardType.CANCEL_ALL]:
+                use_target = 0
+            return (select_card_i, use_card_i, use_target)
     
     def _eval_action(self, c: int, m: int):
         card = self.cards[c]
