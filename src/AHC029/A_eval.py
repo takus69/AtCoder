@@ -2,6 +2,9 @@ from dataclasses import dataclass
 from enum import Enum
 import random
 from random import randint, gauss
+import sys
+
+sys.setrecursionlimit(10**9)
 
 MAX_INVEST_LEVEL = 20
 
@@ -200,7 +203,6 @@ class Solver:
         return self.money
 
     def _play(self, judge, actions):
-        self.turn += 1
         # 行動の決定
         # select_card_i, use_card_i, use_target = self._select_action()
         select_card_i, use_card_i, use_target = actions
@@ -208,6 +210,7 @@ class Solver:
         # カードの選択
         if select_card_i >= 0:
             judge.select_card(select_card_i)
+            self.turn += 1
 
         # カード、プロジェクトの選択
         if self.cards[use_card_i].t == CardType.INVEST:
@@ -222,7 +225,7 @@ class Solver:
 
     def _clone(self):
         judge = MockJudge(self.n, self.m, self.k, self.invest_level, self.turn, self.money)
-        judge.projects = [p for p in self.projects]
+        judge.projects = [Project(p.h, p.v) for p in self.projects]
         judge.cards = [c for c in self.cards]
         if self.next_cards is None:
             judge.next_cards = None
@@ -247,18 +250,47 @@ class Solver:
     def _simulate(self, actions):
         mock = self._clone()
         score = mock._play(mock.judge, actions)
-        '''
-        for _ in range(5):
-            actions = mock._select_action(False)
+        # self.judge.comment(f'simulate actions: {actions}, money: {mock.money}, tmp score: {score}')
+        # for _ in range(2):
+            # actions, score = mock._play_all_actions(mock._play)
+            # actions = mock._select_action(False)
             # self.judge.comment(f'simulute turn {mock.turn}: actions: {actions}, use_card: {mock.cards[actions[1]]}')
-            score = mock._play(mock.judge, actions)
+            # score = mock._play(mock.judge, actions)
         # self.judge.comment(f'simulate end: turn: {mock.turn}')
-        '''
         return score
+
+    def _play_all_actions(self, func):
+        score = -1
+        actions = (0, 0, 0)
+        r_list = []
+        if self.next_cards is None:
+            r_list.append(-1)
+        else:
+            for i in range(self.k):
+                if self.next_cards[i].p <= self.money:
+                    r_list.append(i)
+        for r in r_list:
+            if r >= 0:
+                self.cards[self.pre_use_card_i] = self.next_cards[r]
+            for c in range(self.n):
+                if self.cards[c].t in [CardType.CANCEL_SINGLE, CardType.WORK_SINGLE]:
+                    m_list = range(self.m)
+                else:
+                    m_list = [0]
+                for m in m_list:
+                    # tmp_score = self._play(self.judge, (r, c, m))
+                    mock = self._clone()
+                    tmp_score = mock._play(mock.judge, actions)
+                    # self.judge.comment(f'play all {self.turn}: actions: ({r}, {c}, {m}), score: {tmp_score}')
+                    if tmp_score > score:
+                        score = tmp_score
+                        actions = (r, c, m)
+                        # self.judge.comment(f'play all update {self.turn}: actions: {actions}, score: {score}')
+        return actions, score
 
     def _select_action(self, simulate=False) -> tuple[int, int, int]:
         if simulate:
-            score = 0
+            score = -1
             actions = (0, 0, 0)
             r_list = []
             if self.next_cards is None:
@@ -276,12 +308,18 @@ class Solver:
                     else:
                         m_list = [0]
                     for m in m_list:
-                        self.judge.comment(f'simulate start actions: ({r}, {c}, {m}), use_card: {self.cards[c]}')
+                        # debug
+                        if r >= 0:
+                            select_card = self.next_cards[r]
+                        else:
+                            select_card = None
+                        self.judge.comment(f'simulate start actions: ({r}, {c}, {m}), money: {self.money}, select_card: {select_card}, use_card: {self.cards[c]}, project: {self.projects[m]}')
                         tmp_score = self._simulate((r, c, m))
+                        # self.judge.comment(f'simulate actions: ({r}, {c}, {m}), money: {self.money}, tmp score: {tmp_score}')
                         if tmp_score > score:
                             score = tmp_score
                             actions = (r, c, m)
-                            self.judge.comment(f'simulate update score: {score}, actions: ({r}, {c}, {m}, use_card: {self.cards[c]})')
+                            self.judge.comment(f'simulate update score: {score}, actions: ({r}, {c}, {m}')
             return actions
         else:
             # 補充するカードの選択
@@ -336,6 +374,7 @@ class Solver:
     def _eval_state(self) -> int:
         eval = self.money
         eval += self.money*(self.t-self.turn)/self.t*2**self.invest_level
+        # self.judge.comment(f'{eval}: {self.money}, {self.t}, {self.turn}, {self.invest_level}')
         return eval
 
 
