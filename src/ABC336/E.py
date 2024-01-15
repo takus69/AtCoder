@@ -1,7 +1,29 @@
+import math
+
 N = input()
 
 # 桁和sの時、d+1桁, 桁和i(9×14), 余りj(mod s), Nと同じフラグf
+ans = 0
+for s in range(1, 9*len(N)+1):
+    dp = [[[[0 for _ in range(s)] for _ in range(s+1)] for _ in range(2)] for _ in range(len(N)+1)]  # d+1桁, Nと同じフラグf
+    dp[0][1][0][0] = 1
+    for d in range(len(N)):
+        for f in range(2):
+            for i in range(s+1):
+                for j in range(s):
+                    for t in range(10):
+                        if i+t > s:
+                            continue
+                        if f == 1 and t > int(N[d]):
+                            continue
+                        ff = 0
+                        if f == 1 and t == int(N[d]):
+                            ff = 1
+                        dp[d+1][ff][i+t][(10*j+t)%s] += dp[d][f][i][j]
+    ans += dp[len(N)][1][s][0] + dp[len(N)][0][s][0]
+print(ans)
 
+'''
 ans = 0
 for s in range(1, 9*14+1):
     dp = [[[[0 for _ in range(2)] for _ in range(s)] for _ in range(s+1)] for _ in range(len(N)+1)]
@@ -31,3 +53,4 @@ for s in range(1, 9*14+1):
     ans += dp[len(N)][s][0][1] + dp[len(N)][s][0][0]
 
 print(ans)
+'''
