@@ -10,3 +10,4 @@ out
 .ipynb_checkpoints
 *.json
 *.pkl
+refs
