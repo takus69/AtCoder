@@ -21,6 +21,7 @@ class Judge:
         self.oil_fields = []
         for _ in range(self.M):
             self.oil_fields.append(self._read_oil_field())
+        self.cost = 0
     
     def read_initial(self) -> [int, int, int]:
         return self.N, self.M, self.e
@@ -43,6 +44,7 @@ class Judge:
         return Polyomino(d, poses)
 
     def query(self, poly: Polyomino) -> int:
+        self.cost += 1/(poly.d**(1/2))
         s = f'q {poly.d}'
         for p in poly.poses:
             s += f' {p.i} {p.j}'
@@ -70,19 +72,30 @@ class Solver:
         self.N, self.M, self.e = self.judge.read_initial()
         self.oil_fields = self.judge.read_oil_fields()
 
-    def solve(self) -> int:
+    def solve(self) -> dict:
+        sum_d = 0
+        for poly in self.oil_fields:
+            sum_d += poly.d
         ans = []
+        found_d = 0
         for i in range(self.N):
             for j in range(self.N):
                 v = self.judge.query(Polyomino(1, [Pos(i, j)]))
+                found_d += v
                 if v > 0:
                     ans.append(Pos(i, j))
-        self.judge.answer(ans)
+                #if found_d == sum_d:
+                #    break
+        ret = self.judge.answer(ans)
+        assert ret == 1
+        result = {'N': self.N, 'M': self.M, 'e': self.e, 'cost': self.judge.cost, 'score': self.judge.cost*(10**6)}
+        return result
 
 
 def main():
     solver = Solver()
-    solver.solve()
+    result = solver.solve()
+    print(result, file=sys.stderr)
 
 
 if __name__ == "__main__":
