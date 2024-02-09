@@ -84,8 +84,8 @@ class Solver:
                 found_d += v
                 if v > 0:
                     ans.append(Pos(i, j))
-                #if found_d == sum_d:
-                #    break
+                if found_d == sum_d:
+                    break
         ret = self.judge.answer(ans)
         assert ret == 1
         result = {'N': self.N, 'M': self.M, 'e': self.e, 'cost': self.judge.cost, 'score': self.judge.cost*(10**6)}
