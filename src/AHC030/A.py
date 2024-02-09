@@ -23,7 +23,7 @@ class Judge:
             self.oil_fields.append(self._read_oil_field())
         self.cost = 0
     
-    def read_initial(self) -> [int, int, int]:
+    def read_initial(self) -> list[int, int, int]:
         return self.N, self.M, self.e
 
     def read_oil_fields(self) -> list[Polyomino]:
@@ -74,12 +74,17 @@ class Solver:
 
     def solve(self) -> dict:
         sum_d = 0
+        e_maps = []
         for poly in self.oil_fields:
             sum_d += poly.d
+            e_maps.append(self._expected_map(poly))
+        all_e_maps = self._merge_maps(e_maps)
         ans = []
         found_d = 0
         for i in range(self.N):
             for j in range(self.N):
+                if all_e_maps[i][j] == 0:
+                    continue
                 v = self.judge.query(Polyomino(1, [Pos(i, j)]))
                 found_d += v
                 if v > 0:
@@ -90,6 +95,33 @@ class Solver:
         assert ret == 1
         result = {'N': self.N, 'M': self.M, 'e': self.e, 'cost': self.judge.cost, 'score': self.judge.cost*(10**6)}
         return result
+    
+    def _expected_map(self, poly: Polyomino) -> list[float]:
+        min_i, max_i = self.N, 0
+        min_j, max_j = self.N, 0
+        for p in poly.poses:
+            min_i = min(p.i, min_i)
+            max_i = max(p.i, max_i)
+            min_j = min(p.j, min_j)
+            max_j = max(p.j, max_j)
+        # 平行移動を全パターン試して期待値を求める
+        e_map = [[0]*self.N for _ in range(self.N)]
+        for i in range(self.N-max_i):
+            for j in range(self.N-max_j):
+                for p in poly.poses:
+                    e_map[p.i+i][p.j+j] += 1
+        for i in range(self.N):
+            for j in range(self.N):
+                e_map[i][j] /= poly.d
+        return e_map
+    
+    def _merge_maps(self, e_maps: list[list]):
+        all_e_map = [[0]*self.N for _ in range(self.N)]
+        for m in e_maps:
+            for i in range(self.N):
+                for j in range(self.N):
+                    all_e_map[i][j] += m[i][j]
+        return all_e_map
 
 
 def main():
