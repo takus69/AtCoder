@@ -78,12 +78,13 @@ class Solver:
         for poly in self.oil_fields:
             sum_d += poly.d
             e_maps.append(self._expected_map(poly))
-        all_e_maps = self._merge_maps(e_maps)
+        self.all_e_maps = self._merge_maps(e_maps)
+        self._show_map(self.all_e_maps)
         ans = []
         found_d = 0
         for i in range(self.N):
             for j in range(self.N):
-                if all_e_maps[i][j] == 0:
+                if self.all_e_maps[i][j] == 0:
                     continue
                 v = self.judge.query(Polyomino(1, [Pos(i, j)]))
                 found_d += v
@@ -96,6 +97,16 @@ class Solver:
         result = {'N': self.N, 'M': self.M, 'e': self.e, 'cost': self.judge.cost, 'score': self.judge.cost*(10**6)}
         return result
     
+    def _show_map(self, e_map) -> None:
+        e_max = max(map(max, e_map))
+        self.judge.comment(f'e_max: {e_max}')
+        for i in range(self.N):
+            for j in range(self.N):
+                R = 255
+                G = int(255*(e_max-e_map[i][j])/e_max)
+                B = int(255*(e_max-e_map[i][j])/e_max)
+                self.judge.color(Pos(i, j), f'#{R:02X}{G:02X}{B:02X}')
+
     def _expected_map(self, poly: Polyomino) -> list[float]:
         min_i, max_i = self.N, 0
         min_j, max_j = self.N, 0
@@ -128,6 +139,8 @@ def main():
     solver = Solver()
     result = solver.solve()
     print(result, file=sys.stderr)
+    print('all_e_maps', file=sys.stderr)
+    print(solver.all_e_maps, file=sys.stderr)
 
 
 if __name__ == "__main__":
