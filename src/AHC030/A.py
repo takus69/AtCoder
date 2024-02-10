@@ -91,6 +91,9 @@ class Solver:
             found_d += v
             if v > 0:
                 ans.append(pos)
+            else:
+                # 埋蔵量の期待値の更新
+                None  # self.all_e_maps = self._update_e_maps(self.all_e_maps)
             if found_d == sum_d:  # 油田が全て見つかったら処理終了
                 break
         ret = self.judge.answer(ans)
@@ -135,7 +138,7 @@ class Solver:
                     e_map[p.i+i][p.j+j] += 1
         for i in range(self.N):
             for j in range(self.N):
-                e_map[i][j] /= poly.d
+                e_map[i][j] /= poly.d*(self.N-max_i)*(self.N-max_j)
         return e_map
     
     def _merge_maps(self, e_maps: list[list]):
