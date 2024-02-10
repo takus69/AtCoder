@@ -82,29 +82,41 @@ class Solver:
         self._show_map(self.all_e_maps)
         ans = []
         found_d = 0
-        for i in range(self.N):
-            for j in range(self.N):
-                if self.all_e_maps[i][j] == 0:
-                    continue
-                v = self.judge.query(Polyomino(1, [Pos(i, j)]))
-                found_d += v
-                if v > 0:
-                    ans.append(Pos(i, j))
-                if found_d == sum_d:
-                    break
+        sorted_poses = self._sort_map(self.all_e_maps)
+        for e, pos in sorted_poses:
+            if e == 0:  # 埋蔵量の期待値があるところのみ計測
+                continue
+            self.judge.comment(f'query: (1, pos)')
+            v = self.judge.query(Polyomino(1, [pos]))
+            found_d += v
+            if v > 0:
+                ans.append(pos)
+            if found_d == sum_d:  # 油田が全て見つかったら処理終了
+                break
         ret = self.judge.answer(ans)
         assert ret == 1
         result = {'N': self.N, 'M': self.M, 'e': self.e, 'cost': self.judge.cost, 'score': self.judge.cost*(10**6)}
         return result
     
+    def _sort_map(self, e_map) -> list[list[float, Pos]]:
+        sort_poses = []
+        for i in range(self.N):
+            for j in range(self.N):
+                e = e_map[i][j]
+                sort_poses.append((e, Pos(i, j)))
+        sort_poses = sorted(sort_poses, key=lambda x:x[0], reverse=True)
+        return sort_poses
+
     def _show_map(self, e_map) -> None:
         e_max = max(map(max, e_map))
         self.judge.comment(f'e_max: {e_max}')
         for i in range(self.N):
             for j in range(self.N):
                 R = 255
-                G = int(255*(e_max-e_map[i][j])/e_max)
-                B = int(255*(e_max-e_map[i][j])/e_max)
+                G = int(200*(e_max-e_map[i][j])/e_max)
+                B = int(200*(e_max-e_map[i][j])/e_max)
+                if e_map[i][j] == 0:
+                    G, B = 255, 255
                 self.judge.color(Pos(i, j), f'#{R:02X}{G:02X}{B:02X}')
 
     def _expected_map(self, poly: Polyomino) -> list[float]:
