@@ -2,17 +2,31 @@ from test_A import run
 import numpy as np
 from tqdm import tqdm
 import pandas as pd
+import time
+import multiprocessing
 
 
-data = {'i': [], 'N': [], 'M': [], 'e': [], 'cost': [], 'score': []}
-scores = []
-for i in tqdm(range(50)):
+def main(i):
+    start = time.time()
     r = run(i)
-    data['i'].append(i)
-    data['N'].append(r['N'])
-    data['M'].append(r['M'])
-    data['e'].append(r['e'])
-    data['cost'].append(r['cost'])
-    data['score'].append(r['score'])
-print('score', format(np.sum(data['score']), ','))
-pd.DataFrame(data).to_csv('result.csv', index=False)
+    t = round(time.time()-start, 4)
+    N = r['N']
+    M = r['M']
+    e = r['e']
+    cost = r['cost']
+    score = r['score']
+    data = [i, N, M, e, cost, score, t]
+    print('end', i)
+    return data
+
+
+if __name__ == '__main__':
+    trial = 50
+    processes = multiprocessing.cpu_count()
+    result = []
+    with multiprocessing.Pool(processes=processes) as pool:
+        data = [pool.apply_async(main, (i,)) for i in range(trial)]
+        result = [d.get() for d in data]
+    df = pd.DataFrame(result, columns=['i', 'N', 'M', 'e', 'cost', 'score', 'time'])
+    df.to_csv('result.csv', index=False)
+    print('score', format(int(df['score'].sum()), ','))

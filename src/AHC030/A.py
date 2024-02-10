@@ -85,6 +85,8 @@ class Solver:
         found_d = 0
         sorted_poses = self._sort_map(self.all_e_maps)
         for e, pos in sorted_poses:
+            if e == 0:  # 初期の埋蔵量の期待値が0だと処理終了
+                break
             e = self.all_e_maps[pos.i][pos.j]
             if e == 0:  # 埋蔵量の期待値があるところのみ計測
                 continue
