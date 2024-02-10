@@ -75,33 +75,48 @@ class Solver:
 
     def solve(self) -> dict:
         sum_d = 0
-        self.e_maps = []  # 二次元配列
+        self.e_maps = []  # _expected_mapの結果を保持
         for poly in self.oil_fields:
             sum_d += poly.d
             self.e_maps.append(self._expected_map(poly))
         self.all_e_maps = self._merge_maps(self.e_maps)
         self._show_map(self.all_e_maps)
-        ans = []
+        self.ans = []
         found_d = 0
         sorted_poses = self._sort_map(self.all_e_maps)
         for e, pos in sorted_poses:
+            e = self.all_e_maps[pos.i][pos.j]
             if e == 0:  # 埋蔵量の期待値があるところのみ計測
                 continue
-            self.judge.comment(f'query: (1, pos)')
-            v = self.judge.query(Polyomino(1, [pos]))
+            v = self._mining(pos)
             found_d += v
-            if v > 0:
-                ans.append(pos)
-            else:
-                # 埋蔵量の期待値の更新
-                None  # self.all_e_maps = self._update_e_maps(self.all_e_maps)
             if found_d == sum_d:  # 油田が全て見つかったら処理終了
                 break
-        ret = self.judge.answer(ans)
+        ret = self.judge.answer(self.ans)
         assert ret == 1
         result = {'N': self.N, 'M': self.M, 'e': self.e, 'cost': self.judge.cost, 'score': self.judge.cost*(10**6)}
         return result
     
+    def _mining(self, pos) -> int:
+        self.judge.comment(f'query: (1, pos)')
+        v = self.judge.query(Polyomino(1, [pos]))
+        if v > 0:
+            self.ans.append(pos)
+        else:
+            # 埋蔵量の期待値を更新
+            self.all_e_maps = self._update_e_maps(pos)
+        return v
+    
+    def _update_e_maps(self, pos: Pos):
+        # 埋蔵量が0のposに期待値があるmapはFalseに更新
+        for i in range(self.M):
+            ms = self.e_maps[i]
+            for j in range(len(ms)):
+                m = ms[j][1]
+                if m[pos.i][pos.j] > 0:
+                    self.e_maps[i][j][0] = False
+        return self._merge_maps(self.e_maps)
+
     def _sort_map(self, e_map) -> list[list[float, Pos]]:
         sort_poses = []
         for i in range(self.N):
