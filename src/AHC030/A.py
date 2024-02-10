@@ -1,5 +1,6 @@
 from dataclasses import dataclass
 import sys
+import numpy as np
 
 
 @dataclass
@@ -74,11 +75,11 @@ class Solver:
 
     def solve(self) -> dict:
         sum_d = 0
-        e_maps = []
+        self.e_maps = []  # 二次元配列
         for poly in self.oil_fields:
             sum_d += poly.d
-            e_maps.append(self._expected_map(poly))
-        self.all_e_maps = self._merge_maps(e_maps)
+            self.e_maps.append(self._expected_map(poly))
+        self.all_e_maps = self._merge_maps(self.e_maps)
         self._show_map(self.all_e_maps)
         ans = []
         found_d = 0
@@ -122,7 +123,8 @@ class Solver:
                     G, B = 255, 255
                 self.judge.color(Pos(i, j), f'#{R:02X}{G:02X}{B:02X}')
 
-    def _expected_map(self, poly: Polyomino) -> list[float]:
+    def _expected_map(self, poly: Polyomino) -> list[list[bool, list[float]]]:
+        # Polyminoの配置のあり得るパターンの期待値を全て保持。boolは配置があり得るかの判断用(Trueがあり得る)
         min_i, max_i = self.N, 0
         min_j, max_j = self.N, 0
         for p in poly.poses:
@@ -131,22 +133,27 @@ class Solver:
             min_j = min(p.j, min_j)
             max_j = max(p.j, max_j)
         # 平行移動を全パターン試して期待値を求める
-        e_map = [[0]*self.N for _ in range(self.N)]
+        e_maps = []
+        base_map = np.zeros((self.N, self.N))
+        for p in poly.poses:
+            base_map[p.i][p.j] += 1
+        base_map /= poly.d
         for i in range(self.N-max_i):
             for j in range(self.N-max_j):
-                for p in poly.poses:
-                    e_map[p.i+i][p.j+j] += 1
-        for i in range(self.N):
-            for j in range(self.N):
-                e_map[i][j] /= poly.d*(self.N-max_i)*(self.N-max_j)
-        return e_map
+                e_maps.append([True, np.roll(base_map, (i, j), axis=(0, 1))])
+        return e_maps
     
     def _merge_maps(self, e_maps: list[list]):
-        all_e_map = [[0]*self.N for _ in range(self.N)]
-        for m in e_maps:
-            for i in range(self.N):
-                for j in range(self.N):
-                    all_e_map[i][j] += m[i][j]
+        all_e_map = np.zeros((self.N, self.N))
+        for ms in e_maps:
+            tmp = np.zeros((self.N, self.N))
+            cnt = 0
+            for b, m in ms:
+                if b:
+                    cnt += 1
+                    tmp += m
+            if cnt > 0:
+                all_e_map += tmp / cnt
         return all_e_map
 
 
@@ -154,8 +161,6 @@ def main():
     solver = Solver()
     result = solver.solve()
     print(result, file=sys.stderr)
-    print('all_e_maps', file=sys.stderr)
-    print(solver.all_e_maps, file=sys.stderr)
 
 
 if __name__ == "__main__":
