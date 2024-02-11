@@ -72,6 +72,8 @@ class Solver:
         self.judge = Judge()
         self.N, self.M, self.e = self.judge.read_initial()
         self.oil_fields = self.judge.read_oil_fields()
+        self.oil_maps = []
+        self.pattern_cnt = []
 
     def solve(self) -> dict:
         sum_d = 0
@@ -107,16 +109,26 @@ class Solver:
         else:
             # 埋蔵量の期待値を更新
             self.all_e_maps = self._update_e_maps(pos)
+            # self._show_map(self.all_e_maps)
         return v
     
     def _update_e_maps(self, pos: Pos):
         # 埋蔵量が0のposに期待値があるmapはFalseに更新
         for i in range(self.M):
+            if self.pattern_cnt[i] == 1:
+                continue
             ms = self.e_maps[i]
+            cnt = 0
             for j in range(len(ms)):
+                if not self.e_maps[i][j][0]:
+                    continue
                 m = ms[j][1]
                 if m[pos.i][pos.j] > 0:
                     self.e_maps[i][j][0] = False
+                    self.oil_maps[i] -= m
+                if self.e_maps[i][j][0]:
+                    cnt += 1
+            self.pattern_cnt[i] = cnt
         return self._merge_maps(self.e_maps)
 
     def _sort_map(self, e_map) -> list[list[float, Pos]]:
@@ -154,15 +166,29 @@ class Solver:
         base_map = np.zeros((self.N, self.N))
         for p in poly.poses:
             base_map[p.i][p.j] += 1
-        base_map /= poly.d
+        # base_map /= poly.d
         for i in range(self.N-max_i):
             for j in range(self.N-max_j):
                 e_maps.append([True, np.roll(base_map, (i, j), axis=(0, 1))])
+        oil_map = np.zeros((self.N, self.N))
+        cnt = 0
+        for _, m in e_maps:
+            oil_map += m
+            cnt += 1
+        # print(oil_map, file=sys.stderr)
+        self.oil_maps.append(oil_map)
+        self.pattern_cnt.append(cnt)
         return e_maps
     
     def _merge_maps(self, e_maps: list[list]):
         all_e_map = np.zeros((self.N, self.N))
-        for ms in e_maps:
+        all_e_map2 = np.zeros((self.N, self.N))
+        for i in range(self.M):
+            all_e_map += self.oil_maps[i] / self.pattern_cnt[i]
+        # all_e_map = np.zeros((self.N, self.N))
+        # for ms in e_maps:
+        '''
+            ms = e_maps[i]
             tmp = np.zeros((self.N, self.N))
             cnt = 0
             for b, m in ms:
@@ -170,7 +196,12 @@ class Solver:
                     cnt += 1
                     tmp += m
             if cnt > 0:
-                all_e_map += tmp / cnt
+                all_e_map2 += tmp / cnt
+            for i2 in range(self.N):
+                for j2 in range(self.N):
+                    print(i, i2, j2, tmp[i2][j2] ,self.oil_maps[i][i2][j2])
+                    assert tmp[i2][j2] == self.oil_maps[i][i2][j2]
+            '''
         return all_e_map
 
 
