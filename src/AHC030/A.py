@@ -74,6 +74,7 @@ class Solver:
         self.oil_fields = self.judge.read_oil_fields()
         self.oil_maps = []
         self.pattern_cnt = []
+        self.mined = [[0]*self.N for _ in range(self.N)]
 
     def solve(self) -> dict:
         sum_d = 0
@@ -90,8 +91,9 @@ class Solver:
             if e == 0:  # 初期の埋蔵量の期待値が0だと処理終了
                 break
             e = self.all_e_maps[pos.i][pos.j]
-            if e == 0:  # 埋蔵量の期待値があるところのみ計測
+            if e == 0 or self.mined[pos.i][pos.j]:  # 埋蔵量の期待値が0、もしくは、採掘済みはスキップ
                 continue
+            self.mined[pos.i][pos.j] = 1
             v = self._mining(pos)
             found_d += v
             if found_d == sum_d:  # 油田が全て見つかったら処理終了
@@ -109,7 +111,7 @@ class Solver:
         else:
             # 埋蔵量の期待値を更新
             self.all_e_maps = self._update_e_maps(pos)
-            # self._show_map(self.all_e_maps)
+            self._show_map(self.all_e_maps)
         return v
     
     def _update_e_maps(self, pos: Pos):
@@ -129,6 +131,15 @@ class Solver:
                 if self.e_maps[i][j][0]:
                     cnt += 1
             self.pattern_cnt[i] = cnt
+            # cnt==1 つまり、パターンが特定された場合は全て追加
+            if cnt == 1:
+                for b, m in ms:
+                    if b:
+                        for i in range(self.N):
+                            for j in range(self.N):
+                                if m[i][j] > 0 and self.mined[i][j] == 0:
+                                    self.ans.append(Pos(i, j))
+                                    self.mined[i][j] = 1
         return self._merge_maps(self.e_maps)
 
     def _sort_map(self, e_map) -> list[list[float, Pos]]:
