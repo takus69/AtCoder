@@ -21,7 +21,8 @@ def main(i):
 
 
 if __name__ == '__main__':
-    trial = 100
+    start = time.time()
+    trial = 200
     processes = multiprocessing.cpu_count()
     result = []
     with multiprocessing.Pool(processes=processes) as pool:
@@ -31,3 +32,4 @@ if __name__ == '__main__':
     df = pd.DataFrame(result, columns=['i', 'N', 'M', 'e', 'cost', 'score', 'time'])
     df.to_csv('result.csv', index=False)
     print('score', format(int(df['score'].sum()*50/trial), ','))
+    print(f'end elapsed time: {time.time()-start:.2f}s')
