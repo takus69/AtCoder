@@ -1,6 +1,7 @@
 from dataclasses import dataclass
 import sys
 import numpy as np
+import random
 
 
 @dataclass
@@ -148,6 +149,8 @@ class Solver:
             for j in range(self.N):
                 e = e_map[i][j]
                 sort_poses.append((e, Pos(i, j)))
+        random.seed(0)
+        random.shuffle(sort_poses)
         sort_poses = sorted(sort_poses, key=lambda x:x[0], reverse=True)
         return sort_poses
 
