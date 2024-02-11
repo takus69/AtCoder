@@ -88,7 +88,9 @@ class Solver:
         self.ans = []
         found_d = 0
         sorted_poses = self._sort_map(self.all_e_maps)
-        for e, pos in sorted_poses:
+        while len(sorted_poses) > 0:
+            e, pos = sorted_poses[0]
+        # for e, pos in sorted_poses:
             if e == 0:  # 初期の埋蔵量の期待値が0だと処理終了
                 break
             e = self.all_e_maps[pos.i][pos.j]
@@ -99,6 +101,7 @@ class Solver:
             found_d += v
             if found_d == sum_d:  # 油田が全て見つかったら処理終了
                 break
+            sorted_poses = self._sort_map(self.all_e_maps)
         ret = self.judge.answer(self.ans)
         assert ret == 1
         result = {'N': self.N, 'M': self.M, 'e': self.e, 'cost': self.judge.cost, 'score': self.judge.cost*(10**6)}
@@ -147,8 +150,9 @@ class Solver:
         sort_poses = []
         for i in range(self.N):
             for j in range(self.N):
-                e = e_map[i][j]
-                sort_poses.append((e, Pos(i, j)))
+                if not self.mined[i][j]:
+                    e = e_map[i][j]
+                    sort_poses.append((e, Pos(i, j)))
         random.seed(0)
         random.shuffle(sort_poses)
         sort_poses = sorted(sort_poses, key=lambda x:x[0], reverse=True)
