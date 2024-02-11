@@ -177,7 +177,6 @@ class Solver:
         base_map = np.zeros((self.N, self.N))
         for p in poly.poses:
             base_map[p.i][p.j] += 1
-        # base_map /= poly.d
         for i in range(self.N-max_i):
             for j in range(self.N-max_j):
                 e_maps.append([True, np.roll(base_map, (i, j), axis=(0, 1))])
@@ -186,7 +185,6 @@ class Solver:
         for _, m in e_maps:
             oil_map += m
             cnt += 1
-        # print(oil_map, file=sys.stderr)
         self.oil_maps.append(oil_map)
         self.pattern_cnt.append(cnt)
         return e_maps
@@ -196,23 +194,6 @@ class Solver:
         all_e_map2 = np.zeros((self.N, self.N))
         for i in range(self.M):
             all_e_map += self.oil_maps[i] / self.pattern_cnt[i]
-        # all_e_map = np.zeros((self.N, self.N))
-        # for ms in e_maps:
-        '''
-            ms = e_maps[i]
-            tmp = np.zeros((self.N, self.N))
-            cnt = 0
-            for b, m in ms:
-                if b:
-                    cnt += 1
-                    tmp += m
-            if cnt > 0:
-                all_e_map2 += tmp / cnt
-            for i2 in range(self.N):
-                for j2 in range(self.N):
-                    print(i, i2, j2, tmp[i2][j2] ,self.oil_maps[i][i2][j2])
-                    assert tmp[i2][j2] == self.oil_maps[i][i2][j2]
-            '''
         return all_e_map
 
 
