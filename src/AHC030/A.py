@@ -76,6 +76,7 @@ class Solver:
         self.oil_maps = []
         self.pattern_cnt = []
         self.mined = [[0]*self.N for _ in range(self.N)]
+        self.ans = []
 
     def solve(self) -> dict:
         sum_d = 0
@@ -83,9 +84,8 @@ class Solver:
         for poly in self.oil_fields:
             sum_d += poly.d
             self.e_maps.append(self._expected_map(poly))
-        self.all_e_maps = self._merge_maps(self.e_maps)
+        self.all_e_maps = self._merge_maps()
         self._show_map(self.all_e_maps)
-        self.ans = []
         found_d = 0
         sorted_poses = self._sort_map(self.all_e_maps)
         while len(sorted_poses) > 0:
@@ -144,7 +144,7 @@ class Solver:
                                 if m[i][j] > 0 and self.mined[i][j] == 0:
                                     self.ans.append(Pos(i, j))
                                     self.mined[i][j] = 1
-        return self._merge_maps(self.e_maps)
+        return self._merge_maps()
 
     def _sort_map(self, e_map) -> list[list[float, Pos]]:
         sort_poses = []
@@ -160,7 +160,7 @@ class Solver:
 
     def _show_map(self, e_map) -> None:
         e_max = max(map(max, e_map))
-        self.judge.comment(f'e_max: {e_max}')
+        self.judge.comment(f'e_max: {e_max}, median: {np.median(e_map)}, mean: {np.mean(e_map)}')
         for i in range(self.N):
             for j in range(self.N):
                 R = 255
@@ -196,9 +196,21 @@ class Solver:
         self.pattern_cnt.append(cnt)
         return e_maps
     
-    def _merge_maps(self, e_maps: list[list]):
+    def _merge_maps(self):
+        # 存在確率算出
+        tmp = np.ones((self.N, self.N))
+        for i in range(self.M):
+            tmp *= 1 - self.oil_maps[i]/self.pattern_cnt[i]
+        self.pos_prob = np.ones((self.N, self.N)) - tmp
+        # 存在確率が1は解答に追加
+        for i in range(self.N):
+            for j in range(self.N):
+                if not self.mined[i][j] and self.pos_prob[i][j] == 1:
+                    self.mined[i][j] = 1
+                    self.ans.append(Pos(i, j))
+
+        # 期待値算出
         all_e_map = np.zeros((self.N, self.N))
-        all_e_map2 = np.zeros((self.N, self.N))
         for i in range(self.M):
             all_e_map += self.oil_maps[i] / self.pattern_cnt[i]
         return all_e_map
