@@ -101,7 +101,7 @@ class Solver:
             v = self._mining(pos)
             self.v_map[pos.i][pos.j] = v - self.v_map2[pos.i][pos.j]
             if self.v_map[pos.i][pos.j] == 0:
-                self._update_e_maps(pos)
+                self.all_e_maps = self._update_e_maps(pos)
             self.found_d += v
             if self.found_d == sum_d:  # 油田が全て見つかったら処理終了
                 break
@@ -112,15 +112,32 @@ class Solver:
         return result
     
     def _mining(self, pos) -> int:
-        self.judge.comment(f'query: (1, pos)')
         v = self.judge.query(Polyomino(1, [pos]))
+        self.judge.comment(f'query: (1, {pos}), v: {v}')
         if v > 0:
             self.ans.append(pos)
+            self.all_e_maps = self._update_e_maps_v(pos)
         else:
             # 埋蔵量の期待値を更新
             self.all_e_maps = self._update_e_maps(pos)
-            # self._show_map(self.all_e_maps)
+            self._show_map(self.all_e_maps)
         return v
+
+    def _update_e_maps_v(self, pos):
+        # 埋蔵量がvの場合にe_mapsを更新(1.1倍)
+        for i in range(self.M):
+            if self.pattern_cnt[i] == 1:
+                continue
+            ms = self.e_maps[i]
+            for j in range(len(ms)):
+                if not ms[j][0]:
+                    continue
+                m = ms[j][1]
+                if m[pos.i][pos.j] > 0:
+                    self.oil_maps[i] -= m
+                    self.e_maps[i][j][1] = 1.1*m
+                    self.oil_maps[i] += 1.1*m
+        return self._merge_maps()
     
     def _update_e_maps(self, pos: Pos):
         # 埋蔵量が0のposに期待値があるmapはFalseに更新
@@ -154,7 +171,7 @@ class Solver:
                             self.v_map[i][j] -= 1
                             self.v_map2[i][j] += 1
                             if self.v_map[i][j] == 0:
-                                self._update_e_maps(Pos(i, j))
+                                self.all_e_maps = self._update_e_maps(Pos(i, j))
         return self._merge_maps()
 
     def _sort_map(self, e_map) -> list[list[float, Pos]]:
