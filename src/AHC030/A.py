@@ -119,7 +119,7 @@ class Solver:
         else:
             # 埋蔵量の期待値を更新
             self.all_e_maps = self._update_e_maps(pos)
-            self._show_map(self.all_e_maps)
+            # self._show_map(self.all_e_maps)
         return v
     
     def _update_e_maps(self, pos: Pos):
