@@ -78,16 +78,17 @@ class Solver:
         self.mined = [[0]*self.N for _ in range(self.N)]
         self.ans = []
         self.v_map = [[2*self.M]*self.N for _ in range(self.N)]
+        self.v_map2 = [[0]*self.N for _ in range(self.N)]
 
     def solve(self) -> dict:
         sum_d = 0
+        self.found_d = 0
         self.e_maps = []  # _expected_mapの結果を保持
         for poly in self.oil_fields:
             sum_d += poly.d
             self.e_maps.append(self._expected_map(poly))
         self.all_e_maps = self._merge_maps()
         self._show_map(self.all_e_maps)
-        found_d = 0
         sorted_poses = self._sort_map(self.all_e_maps)
         while len(sorted_poses) > 0:
             e, pos = sorted_poses[0]
@@ -98,9 +99,11 @@ class Solver:
                 continue
             self.mined[pos.i][pos.j] = 1
             v = self._mining(pos)
-            self.v_map[pos.i][pos.j] = v
-            found_d += v
-            if found_d == sum_d:  # 油田が全て見つかったら処理終了
+            self.v_map[pos.i][pos.j] = v - self.v_map2[pos.i][pos.j]
+            if self.v_map[pos.i][pos.j] == 0:
+                self._update_e_maps(pos)
+            self.found_d += v
+            if self.found_d == sum_d:  # 油田が全て見つかったら処理終了
                 break
             sorted_poses = self._sort_map(self.all_e_maps)
         ret = self.judge.answer(self.ans)
@@ -135,20 +138,23 @@ class Solver:
                     self.oil_maps[i] -= m
                 if self.e_maps[i][j][0]:
                     cnt += 1
+                    jj = j
             self.pattern_cnt[i] = cnt
             # cnt==1 つまり、パターンが特定された場合は全て追加
             if cnt == 1:
-                for b, m in ms:
-                    if b:
-                        for i in range(self.N):
-                            for j in range(self.N):
-                                if m[i][j] > 0 and self.mined[i][j] == 0:
-                                    self.ans.append(Pos(i, j))
-                                    self.mined[i][j] = 1
-                                if m[i][j] > 0:
-                                    self.v_map[i][j] -= 1
-                                    if self.v_map[i][j] == 0:
-                                        self._update_e_maps(Pos(i, j))
+                _, m, min_max = ms[jj]
+                min_i, max_i, min_j, max_j = min_max
+                for i in range(min_i, max_i+1):
+                    for j in range(min_j, max_j+1):
+                        if m[i][j] > 0 and self.mined[i][j] == 0:
+                            self.ans.append(Pos(i, j))
+                            self.mined[i][j] = 1
+                            self.found_d += 1
+                        if m[i][j] > 0:
+                            self.v_map[i][j] -= 1
+                            self.v_map2[i][j] += 1
+                            if self.v_map[i][j] == 0:
+                                self._update_e_maps(Pos(i, j))
         return self._merge_maps()
 
     def _sort_map(self, e_map) -> list[list[float, Pos]]:
@@ -172,7 +178,7 @@ class Solver:
                 R = int(200*(e_max-e_map[i][j])/e_max)
                 B = int(200*(e_max-e_map[i][j])/e_max)
                 if e_map[i][j] == 0:
-                    G, B = 255, 255
+                    R, B = 255, 255
                 self.judge.color(Pos(i, j), f'#{R:02X}{G:02X}{B:02X}')
 
     def _expected_map(self, poly: Polyomino) -> list[list[bool, list[float]]]:
@@ -191,10 +197,10 @@ class Solver:
             base_map[p.i][p.j] += 1
         for i in range(self.N-max_i):
             for j in range(self.N-max_j):
-                e_maps.append([True, np.roll(base_map, (i, j), axis=(0, 1))])
+                e_maps.append([True, np.roll(base_map, (i, j), axis=(0, 1)), (min_i+i, max_i+i, min_j+j, max_j+j)])
         oil_map = np.zeros((self.N, self.N))
         cnt = 0
-        for _, m in e_maps:
+        for _, m, _ in e_maps:
             oil_map += m
             cnt += 1
         self.oil_maps.append(oil_map)
@@ -213,6 +219,7 @@ class Solver:
                 if not self.mined[i][j] and self.pos_prob[i][j] == 1:
                     self.mined[i][j] = 1
                     self.ans.append(Pos(i, j))
+                    self.found_d += 1
 
         # 期待値算出
         all_e_map = np.zeros((self.N, self.N))
