@@ -116,7 +116,7 @@ class Solver:
         self.judge.comment(f'query: (1, {pos}), v: {v}')
         if v > 0:
             self.ans.append(pos)
-            self.all_e_maps = self._update_e_maps_v(pos)
+            # self.all_e_maps = self._update_e_maps_v(pos)
         else:
             # 埋蔵量の期待値を更新
             self.all_e_maps = self._update_e_maps(pos)
@@ -237,7 +237,9 @@ class Solver:
                     self.mined[i][j] = 1
                     self.ans.append(Pos(i, j))
                     self.found_d += 1
-
+                # if not self.mined[i][j] and self.pos_prob[i][j] == 0:
+                #     self.mined[i][j] = 1
+                #     self._update_e_maps(Pos(i, j))
         # 期待値算出
         all_e_map = np.zeros((self.N, self.N))
         for i in range(self.M):
