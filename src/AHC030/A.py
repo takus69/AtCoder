@@ -77,6 +77,7 @@ class Solver:
         self.pattern_cnt = []
         self.mined = [[0]*self.N for _ in range(self.N)]
         self.ans = []
+        self.v_map = [[2*self.M]*self.N for _ in range(self.N)]
 
     def solve(self) -> dict:
         sum_d = 0
@@ -90,7 +91,6 @@ class Solver:
         sorted_poses = self._sort_map(self.all_e_maps)
         while len(sorted_poses) > 0:
             e, pos = sorted_poses[0]
-        # for e, pos in sorted_poses:
             if e == 0:  # 初期の埋蔵量の期待値が0だと処理終了
                 break
             e = self.all_e_maps[pos.i][pos.j]
@@ -98,6 +98,7 @@ class Solver:
                 continue
             self.mined[pos.i][pos.j] = 1
             v = self._mining(pos)
+            self.v_map[pos.i][pos.j] = v
             found_d += v
             if found_d == sum_d:  # 油田が全て見つかったら処理終了
                 break
@@ -144,6 +145,10 @@ class Solver:
                                 if m[i][j] > 0 and self.mined[i][j] == 0:
                                     self.ans.append(Pos(i, j))
                                     self.mined[i][j] = 1
+                                if m[i][j] > 0:
+                                    self.v_map[i][j] -= 1
+                                    if self.v_map[i][j] == 0:
+                                        self._update_e_maps(Pos(i, j))
         return self._merge_maps()
 
     def _sort_map(self, e_map) -> list[list[float, Pos]]:
@@ -163,8 +168,8 @@ class Solver:
         self.judge.comment(f'e_max: {e_max}, median: {np.median(e_map)}, mean: {np.mean(e_map)}')
         for i in range(self.N):
             for j in range(self.N):
-                R = 255
-                G = int(200*(e_max-e_map[i][j])/e_max)
+                G = 255
+                R = int(200*(e_max-e_map[i][j])/e_max)
                 B = int(200*(e_max-e_map[i][j])/e_max)
                 if e_map[i][j] == 0:
                     G, B = 255, 255
