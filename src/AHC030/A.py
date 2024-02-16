@@ -73,12 +73,12 @@ class Solver:
         self.judge = Judge()
         self.N, self.M, self.e = self.judge.read_initial()
         self.oil_fields = self.judge.read_oil_fields()
-        self.oil_maps = []
-        self.pattern_cnt = []
-        self.mined = [[0]*self.N for _ in range(self.N)]
-        self.ans = []
-        self.v_map = [[2*self.M]*self.N for _ in range(self.N)]
-        self.v_map2 = [[0]*self.N for _ in range(self.N)]
+        self.oil_maps = []  # 油田ごとの期待値
+        self.pattern_cnt = []  # 油田のパターンの残数
+        self.mined = [[0]*self.N for _ in range(self.N)]  # 採掘、もしくは、有無が確定した箇所
+        self.ans = []  # 解答。埋蔵量がある位置
+        self.v_map = [[2*self.M]*self.N for _ in range(self.N)]  # 埋蔵量を保持
+        self.v_map2 = [[0]*self.N for _ in range(self.N)]  # 採掘せずに有無が確定した埋蔵量を保持
 
     def solve(self) -> dict:
         sum_d = 0
@@ -92,10 +92,9 @@ class Solver:
         sorted_poses = self._sort_map(self.all_e_maps)
         while len(sorted_poses) > 0:
             e, pos = sorted_poses[0]
-            if e == 0:  # 初期の埋蔵量の期待値が0だと処理終了
+            if e == 0:  # 埋蔵量の期待値が0だと処理終了
                 break
-            e = self.all_e_maps[pos.i][pos.j]
-            if e == 0 or self.mined[pos.i][pos.j]:  # 埋蔵量の期待値が0、もしくは、採掘済みはスキップ
+            if self.mined[pos.i][pos.j]:  # 採掘済みはスキップ
                 continue
             self.mined[pos.i][pos.j] = 1
             v = self._mining(pos)
@@ -225,10 +224,12 @@ class Solver:
         return e_maps
     
     def _merge_maps(self):
-        # 存在確率算出
+        # 存在確率、期待値算出
+        all_e_map = np.zeros((self.N, self.N))
         tmp = np.ones((self.N, self.N))
         for i in range(self.M):
-            tmp *= 1 - self.oil_maps[i]/self.pattern_cnt[i]
+            tmp *= 1 - self.oil_maps[i]/self.pattern_cnt[i]  # 存在(しない)確率
+            all_e_map += self.oil_maps[i] / self.pattern_cnt[i]  # 期待値
         self.pos_prob = np.ones((self.N, self.N)) - tmp
         # 存在確率が1は解答に追加
         for i in range(self.N):
@@ -240,10 +241,6 @@ class Solver:
                 # if not self.mined[i][j] and self.pos_prob[i][j] == 0:
                 #     self.mined[i][j] = 1
                 #     self._update_e_maps(Pos(i, j))
-        # 期待値算出
-        all_e_map = np.zeros((self.N, self.N))
-        for i in range(self.M):
-            all_e_map += self.oil_maps[i] / self.pattern_cnt[i]
         return all_e_map
 
 
