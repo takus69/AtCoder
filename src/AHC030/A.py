@@ -96,7 +96,6 @@ class Solver:
                 break
             if self.mined[pos.i][pos.j]:  # 採掘済みはスキップ
                 continue
-            self.mined[pos.i][pos.j] = 1
             v = self._mining(pos)
             self.v_map[pos.i][pos.j] = v - self.v_map2[pos.i][pos.j]
             if self.v_map[pos.i][pos.j] == 0:
@@ -112,6 +111,7 @@ class Solver:
     
     def _mining(self, pos) -> int:
         v = self.judge.query(Polyomino(1, [pos]))
+        self.mined[pos.i][pos.j] = 1
         self.judge.comment(f'query: (1, {pos}), v: {v}')
         if v > 0:
             self.ans.append(pos)
@@ -152,7 +152,7 @@ class Solver:
                 if m[pos.i][pos.j] > 0:
                     self.e_maps[i][j][0] = False
                     self.oil_maps[i] -= m
-                if self.e_maps[i][j][0]:
+                else:
                     cnt += 1
                     jj = j
             self.pattern_cnt[i] = cnt
