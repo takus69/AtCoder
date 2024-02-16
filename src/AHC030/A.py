@@ -115,29 +115,12 @@ class Solver:
         self.judge.comment(f'query: (1, {pos}), v: {v}')
         if v > 0:
             self.ans.append(pos)
-            # self.all_e_maps = self._update_e_maps_v(pos)
         else:
             # 埋蔵量の期待値を更新
             self.all_e_maps = self._update_e_maps(pos)
-            self._show_map(self.all_e_maps)
+            # self._show_map(self.all_e_maps)
         return v
 
-    def _update_e_maps_v(self, pos):
-        # 埋蔵量がvの場合にe_mapsを更新(1.1倍)
-        for i in range(self.M):
-            if self.pattern_cnt[i] == 1:
-                continue
-            ms = self.e_maps[i]
-            for j in range(len(ms)):
-                if not ms[j][0]:
-                    continue
-                m = ms[j][1]
-                if m[pos.i][pos.j] > 0:
-                    self.oil_maps[i] -= m
-                    self.e_maps[i][j][1] = 1.1*m
-                    self.oil_maps[i] += 1.1*m
-        return self._merge_maps()
-    
     def _update_e_maps(self, pos: Pos):
         # 埋蔵量が0のposに期待値があるmapはFalseに更新
         for i in range(self.M):
@@ -158,19 +141,17 @@ class Solver:
             self.pattern_cnt[i] = cnt
             # cnt==1 つまり、パターンが特定された場合は全て追加
             if cnt == 1:
-                _, m, min_max = ms[jj]
-                min_i, max_i, min_j, max_j = min_max
-                for i in range(min_i, max_i+1):
-                    for j in range(min_j, max_j+1):
-                        if m[i][j] > 0 and self.mined[i][j] == 0:
-                            self.ans.append(Pos(i, j))
-                            self.mined[i][j] = 1
-                            self.found_d += 1
-                        if m[i][j] > 0:
-                            self.v_map[i][j] -= 1
-                            self.v_map2[i][j] += 1
-                            if self.v_map[i][j] == 0:
-                                self.all_e_maps = self._update_e_maps(Pos(i, j))
+                _, m, ij = ms[jj]
+                for pp in self.oil_fields[i].poses:
+                    i2, j2 = ij[0]+pp.i, ij[1]+pp.j
+                    if self.mined[i2][j2] == 0:
+                        self.ans.append(Pos(i2, j2))
+                        self.mined[i2][j2] = 1
+                        self.found_d += 1
+                    self.v_map[i2][j2] -= 1
+                    self.v_map2[i2][j2] += 1
+                    if self.v_map[i2][j2] == 0:
+                        self.all_e_maps = self._update_e_maps(Pos(i2, j2))
         return self._merge_maps()
 
     def _sort_map(self, e_map) -> list[list[float, Pos]]:
@@ -213,7 +194,7 @@ class Solver:
             base_map[p.i][p.j] += 1
         for i in range(self.N-max_i):
             for j in range(self.N-max_j):
-                e_maps.append([True, np.roll(base_map, (i, j), axis=(0, 1)), (min_i+i, max_i+i, min_j+j, max_j+j)])
+                e_maps.append([True, np.roll(base_map, (i, j), axis=(0, 1)), (i, j)])
         oil_map = np.zeros((self.N, self.N))
         cnt = 0
         for _, m, _ in e_maps:
