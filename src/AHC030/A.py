@@ -89,7 +89,7 @@ class Solver:
             self.e_maps.append(self._expected_map(poly))
         self.all_e_maps = self._merge_maps()
         self._show_map(self.all_e_maps)
-        sorted_poses = self._sort_map(self.all_e_maps)
+        sorted_poses = self._sort_map(self.pos_prob)
         while len(sorted_poses) > 0:
             e, pos = sorted_poses[0]
             if e == 0:  # 埋蔵量の期待値が0だと処理終了
@@ -103,7 +103,7 @@ class Solver:
             self.found_d += v
             if self.found_d == sum_d:  # 油田が全て見つかったら処理終了
                 break
-            sorted_poses = self._sort_map(self.all_e_maps)
+            sorted_poses = self._sort_map(self.pos_prob)
         ret = self.judge.answer(self.ans)
         assert ret == 1
         result = {'N': self.N, 'M': self.M, 'e': self.e, 'cost': self.judge.cost, 'score': self.judge.cost*(10**6)}
@@ -172,9 +172,10 @@ class Solver:
         for i in range(self.N):
             for j in range(self.N):
                 G = 255
-                R = int(200*(e_max-e_map[i][j])/e_max)
-                B = int(200*(e_max-e_map[i][j])/e_max)
-                if e_map[i][j] == 0:
+                if e_max > 0:
+                    R = int(200*(e_max-e_map[i][j])/e_max)
+                    B = int(200*(e_max-e_map[i][j])/e_max)
+                if e_map[i][j] == 0 or e_max == 0:
                     R, B = 255, 255
                 self.judge.color(Pos(i, j), f'#{R:02X}{G:02X}{B:02X}')
 
