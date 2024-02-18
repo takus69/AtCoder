@@ -97,10 +97,6 @@ class Solver:
             if self.mined[pos.i][pos.j]:  # 採掘済みはスキップ
                 continue
             v = self._mining(pos)
-            self.v_map[pos.i][pos.j] = v - self.v_map2[pos.i][pos.j]
-            if self.v_map[pos.i][pos.j] == 0:
-                self.all_e_maps = self._update_e_maps(pos)
-            self.found_d += v
             if self.found_d == sum_d:  # 油田が全て見つかったら処理終了
                 break
             sorted_poses = self._sort_map(self.pos_prob)
@@ -113,12 +109,18 @@ class Solver:
         v = self.judge.query(Polyomino(1, [pos]))
         self.mined[pos.i][pos.j] = 1
         self.judge.comment(f'query: (1, {pos}), v: {v}')
+
+        # 埋蔵量の情報を保存
+        self.v_map[pos.i][pos.j] = v - self.v_map2[pos.i][pos.j]
+        if self.v_map[pos.i][pos.j] == 0:
+            self.all_e_maps = self._update_e_maps(pos)
+        self.found_d += v
         if v > 0:
             self.ans.append(pos)
         else:
             # 埋蔵量の期待値を更新
             self.all_e_maps = self._update_e_maps(pos)
-            # self._show_map(self.all_e_maps)
+            self._show_map(self.all_e_maps)
         return v
 
     def _update_e_maps(self, pos: Pos):
@@ -148,6 +150,7 @@ class Solver:
                         self.ans.append(Pos(i2, j2))
                         self.mined[i2][j2] = 1
                         self.found_d += 1
+                    # 採掘済みで埋蔵量の元が全て特定された位置は他にないためe_mapsを更新
                     self.v_map[i2][j2] -= 1
                     self.v_map2[i2][j2] += 1
                     if self.v_map[i2][j2] == 0:
@@ -220,9 +223,11 @@ class Solver:
                     self.mined[i][j] = 1
                     self.ans.append(Pos(i, j))
                     self.found_d += 1
-                # if not self.mined[i][j] and self.pos_prob[i][j] == 0:
-                #     self.mined[i][j] = 1
-                #     self._update_e_maps(Pos(i, j))
+                '''
+                if not self.mined[i][j] and self.pos_prob[i][j] == 0:
+                    self.mined[i][j] = 1
+                    self.all_e_maps = self._update_e_maps(Pos(i, j))
+                '''
         return all_e_map
 
 
