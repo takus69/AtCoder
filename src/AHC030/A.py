@@ -2,6 +2,8 @@ from dataclasses import dataclass
 import sys
 import numpy as np
 import random
+import itertools
+import math
 
 
 @dataclass
@@ -63,6 +65,9 @@ class Judge:
     def comment(self, message: str) -> None:
         print(f'# {message}')
 
+    def std(self, *message: str) -> None:
+        print(*message, file=sys.stderr)
+
     def color(self, p:  Pos, c: str) -> None:
         print(f'#c {p.i} {p.j} {c}')
 
@@ -81,6 +86,7 @@ class Solver:
         self.v_map2 = [[0]*self.N for _ in range(self.N)]  # 採掘せずに有無が確定した埋蔵量を保持
 
     def solve(self) -> dict:
+        trial_cnt = 0
         sum_d = 0
         self.found_d = 0
         self.e_maps = []  # _expected_mapの結果を保持
@@ -91,7 +97,16 @@ class Solver:
         self._show_map(self.all_e_maps)
         sorted_poses = self._sort_map(self.pos_prob)
         while len(sorted_poses) > 0:
-            e, pos = sorted_poses[0]
+            trial_cnt += 1
+            #  self.judge.std('trial cnt', trial_cnt)
+            for i in range(len(sorted_poses)):
+                e, pos = sorted_poses[i]
+                if e == 1:
+                    self.ans.append(pos)
+                    self.mined[pos.i][pos.j] = 1
+                    self.found_d += 1
+                else:
+                    break
             if e == 0:  # 埋蔵量の期待値が0だと処理終了
                 break
             if self.mined[pos.i][pos.j]:  # 採掘済みはスキップ
@@ -107,21 +122,93 @@ class Solver:
     
     def _mining(self, pos) -> int:
         v = self.judge.query(Polyomino(1, [pos]))
+        if v > 0:
+            self.ans.append(pos)
         self.mined[pos.i][pos.j] = 1
         self.judge.comment(f'query: (1, {pos}), v: {v}')
 
         # 埋蔵量の情報を保存
+        self.all_e_maps = self._update_e_maps_v(pos, v)
+        self.found_d += v
+        '''
         self.v_map[pos.i][pos.j] = v - self.v_map2[pos.i][pos.j]
         if self.v_map[pos.i][pos.j] == 0:
             self.all_e_maps = self._update_e_maps(pos)
-        self.found_d += v
         if v > 0:
             self.ans.append(pos)
         else:
             # 埋蔵量の期待値を更新
             self.all_e_maps = self._update_e_maps(pos)
             self._show_map(self.all_e_maps)
+        '''
         return v
+
+    def _update_e_maps_v(self, pos, v):
+        # self.judge.std(pos, v)
+        # 各油田が位置posにある確率を算出
+        p_pos_v = 0  # 位置posがvである確率
+        p_pos_oils1 = [0 for _ in range(self.M)]  # 各油田が位置posにある確率
+        p_pos_oils2 = [0 for _ in range(self.M)]  # 各油田が位置posにない確率
+        for c in itertools.combinations(range(self.M), v):  # nCvの組み合わせを全て足し合わせる
+            p = 1
+            for i in range(self.M):
+                if i in c:
+                    p *= self.oil_maps[i][pos.i][pos.j]
+                else:
+                    p *= 1-self.oil_maps[i][pos.i][pos.j]
+            p_pos_v += p
+            for i in range(self.M):
+                if i in c:
+                    p_pos_oils1[i] += p
+                else:
+                    p_pos_oils2[i] += p
+
+        # ベイズの定理で更新
+        for i in range(self.M):
+            ms = self.e_maps[i]
+            pp = self.oil_maps[i][pos.i][pos.j]
+            for j in range(len(ms)):
+                m = ms[j][1]
+                # if (i == 0 and j == 50) or (i == 1 and j == 42):
+                #     self.judge.std(f'{i} pp={pp}, m={m[8][3]}, pos={pos}, v={v}, *={p_pos_oils1[i] / (pp * p_pos_v)}, p_pos_v={p_pos_v}, p_pos_oils1[i]={p_pos_oils1[i]}, p_pos_oils2[i]={p_pos_oils2[i]}')
+                #     self.judge.std(f'{[m[1].max() for m in ms]}')
+                if v > 0:
+                    if (pp == 0 and m[pos.i][pos.j] > 0) or (pp == 1 and m[pos.i][pos.j] == 0):
+                        self.e_maps[i][j][1] = m * 0
+                        self.e_maps[i][j][0] = False
+                    else:
+                        if m[pos.i][pos.j] > 0:
+                            self.e_maps[i][j][1] = m * p_pos_oils1[i] / (pp * p_pos_v)
+                        else:
+                            self.e_maps[i][j][1] = m * p_pos_oils2[i] / ((1-pp) * p_pos_v)
+                else:
+                    if m[pos.i][pos.j] > 0 or (pp == 1 and m[pos.i][pos.j] == 0):
+                        self.e_maps[i][j][1] = m * 0
+                        self.e_maps[i][j][0] = False
+                    else:
+                        if m[pos.i][pos.j] > 0:
+                            self.e_maps[i][j][1] = m * p_pos_oils1[i] / (pp * p_pos_v)
+                        else:
+                            self.e_maps[i][j][1] = m * p_pos_oils2[i] / ((1-pp) * p_pos_v)
+                # if i == 1 and j == 7:
+                #     self.judge.std(f'2pp={pp}, m={self.e_maps[i][j][1][3][8]}, pos={pos}, v={v}, *={p_pos_oils1[i] / (pp * p_pos_v)}, p_pos_v={p_pos_v}, p_pos_oils1[i]={p_pos_oils1[i]}, p_pos_oils2[i]={p_pos_oils2[i]}')
+        
+        # 期待値算出
+        # self.pattern_cnt = [p_pos_v for _ in range(self.M)]
+        all_e_map = np.zeros((self.N, self.N))
+        for i in range(self.M):
+            self.oil_maps[i] = np.zeros((self.N, self.N))
+            ms = self.e_maps[i]
+            for j in range(len(ms)):
+                self.oil_maps[i] += ms[j][1]
+                all_e_map += ms[j][1]
+
+        # 存在確率算出
+        tmp = np.ones((self.N, self.N))
+        for i in range(self.M):
+            tmp *= 1 - self.oil_maps[i]
+        self.pos_prob = np.ones((self.N, self.N)) - tmp
+        return all_e_map
 
     def _update_e_maps(self, pos: Pos):
         # 埋蔵量が0のposに期待値があるmapはFalseに更新
@@ -196,6 +283,7 @@ class Solver:
         base_map = np.zeros((self.N, self.N))
         for p in poly.poses:
             base_map[p.i][p.j] += 1
+        base_map /= (self.N-max_i) * (self.N-max_j)  # ADD
         for i in range(self.N-max_i):
             for j in range(self.N-max_j):
                 e_maps.append([True, np.roll(base_map, (i, j), axis=(0, 1)), (i, j)])
@@ -213,8 +301,8 @@ class Solver:
         all_e_map = np.zeros((self.N, self.N))
         tmp = np.ones((self.N, self.N))
         for i in range(self.M):
-            tmp *= 1 - self.oil_maps[i]/self.pattern_cnt[i]  # 存在(しない)確率
-            all_e_map += self.oil_maps[i] / self.pattern_cnt[i]  # 期待値
+            tmp *= 1 - self.oil_maps[i] # /self.pattern_cnt[i]  # 存在(しない)確率
+            all_e_map += self.oil_maps[i] # / self.pattern_cnt[i]  # 期待値
         self.pos_prob = np.ones((self.N, self.N)) - tmp
         # 存在確率が1は解答に追加
         for i in range(self.N):
