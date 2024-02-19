@@ -14,9 +14,10 @@ def main(i):
     N = r['N']
     M = r['M']
     e = r['e']
+    d = r['d']
     cost = r['cost']
     score = r['score']
-    data = [i, N, M, e, cost, score, t]
+    data = [i, N, M, e, d, cost, score, t]
     print('\r', 'end', i, end='')
     # print(i, 'end')
     return data
@@ -24,7 +25,7 @@ def main(i):
 
 if __name__ == '__main__':
     start = time.time()
-    trial = 200
+    trial = 6000
     result = []
     '''
     for i in tqdm(range(trial)):
@@ -43,7 +44,7 @@ if __name__ == '__main__':
         data = [pool.apply_async(main, (i,)) for i in range(trial)]
         result = [d.get() for d in data]
     print()
-    df = pd.DataFrame(result, columns=['i', 'N', 'M', 'e', 'cost', 'score', 'time'])
+    df = pd.DataFrame(result, columns=['i', 'N', 'M', 'e', 'd', 'cost', 'score', 'time'])
     df.to_csv('result.csv', index=False)
     print('score', format(int(df['score'].sum()*50/trial), ','))
     print(f'end elapsed time: {time.time()-start:.2f}s')

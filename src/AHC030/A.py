@@ -91,7 +91,13 @@ class Solver:
         self._show_map(self.all_e_maps)
         sorted_poses = self._sort_map(self.pos_prob)
         while len(sorted_poses) > 0:
-            e, pos = sorted_poses[0]
+            if False: # self.M > 10 and self.found_d < sum_d/3: # and self.e > random.random():
+                i = int(random.expovariate(lambd=1))
+                # i = int(random.random()*(len(sorted_poses)/2))
+                i = min(len(sorted_poses)-1, i)
+            else:
+                i = 0
+            e, pos = sorted_poses[i]
             if e == 0:  # 埋蔵量の期待値が0だと処理終了
                 break
             if self.mined[pos.i][pos.j]:  # 採掘済みはスキップ
@@ -102,7 +108,7 @@ class Solver:
             sorted_poses = self._sort_map(self.pos_prob)
         ret = self.judge.answer(self.ans)
         assert ret == 1
-        result = {'N': self.N, 'M': self.M, 'e': self.e, 'cost': self.judge.cost, 'score': self.judge.cost*(10**6)}
+        result = {'N': self.N, 'M': self.M, 'e': self.e, 'd': sum_d, 'cost': self.judge.cost, 'score': self.judge.cost*(10**6)}
         return result
     
     def _mining(self, pos) -> int:
@@ -112,15 +118,15 @@ class Solver:
 
         # 埋蔵量の情報を保存
         self.v_map[pos.i][pos.j] = v - self.v_map2[pos.i][pos.j]
-        if self.v_map[pos.i][pos.j] == 0:
-            self.all_e_maps = self._update_e_maps(pos)
         self.found_d += v
         if v > 0:
             self.ans.append(pos)
+            if self.v_map[pos.i][pos.j] == 0:
+                self.all_e_maps = self._update_e_maps(pos)
         else:
             # 埋蔵量の期待値を更新
             self.all_e_maps = self._update_e_maps(pos)
-            self._show_map(self.all_e_maps)
+            # self._show_map(self.all_e_maps)
         return v
 
     def _update_e_maps(self, pos: Pos):
@@ -163,7 +169,8 @@ class Solver:
             for j in range(self.N):
                 if not self.mined[i][j]:
                     e = e_map[i][j]
-                    sort_poses.append((e, Pos(i, j)))
+                    if e > 0:
+                        sort_poses.append((e, Pos(i, j)))
         random.seed(0)
         random.shuffle(sort_poses)
         sort_poses = sorted(sort_poses, key=lambda x:x[0], reverse=True)
