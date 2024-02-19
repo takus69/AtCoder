@@ -9,7 +9,7 @@ def run(i):
 
 
 if __name__ == '__main__':
-    i = 68
+    i = 17
     # 実行テスト
     output_str =subprocess.run(f'powershell cat in/{i:04}.txt | tester.exe python A.py > out/{i:04}.txt', shell=True, capture_output=True, text=True).stderr
     print(output_str)

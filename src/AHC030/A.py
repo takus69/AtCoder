@@ -69,7 +69,7 @@ class Judge:
 
 class Solver:
 
-    def __init__(self):
+    def __init__(self, param={'seed': 0, 'd_rate': 4, 'min_M': 0}):
         self.judge = Judge()
         self.N, self.M, self.e = self.judge.read_initial()
         self.oil_fields = self.judge.read_oil_fields()
@@ -79,6 +79,10 @@ class Solver:
         self.ans = []  # 解答。埋蔵量がある位置
         self.v_map = [[2*self.M]*self.N for _ in range(self.N)]  # 埋蔵量を保持
         self.v_map2 = [[0]*self.N for _ in range(self.N)]  # 採掘せずに有無が確定した埋蔵量を保持
+        # パラメータ
+        self.seed = param['seed']
+        self.d_rate = param['d_rate']
+        self.min_M = param['min_M']
 
     def solve(self) -> dict:
         sum_d = 0
@@ -91,7 +95,7 @@ class Solver:
         self._show_map(self.all_e_maps)
         sorted_poses = self._sort_map(self.pos_prob)
         while len(sorted_poses) > 0:
-            if False: # self.M > 10 and self.found_d < sum_d/3: # and self.e > random.random():
+            if self.M > self.min_M and self.found_d < sum_d/self.d_rate:
                 i = int(random.expovariate(lambd=1))
                 # i = int(random.random()*(len(sorted_poses)/2))
                 i = min(len(sorted_poses)-1, i)
@@ -171,7 +175,7 @@ class Solver:
                     e = e_map[i][j]
                     if e > 0:
                         sort_poses.append((e, Pos(i, j)))
-        random.seed(0)
+        random.seed(self.seed)
         random.shuffle(sort_poses)
         sort_poses = sorted(sort_poses, key=lambda x:x[0], reverse=True)
         return sort_poses
@@ -238,11 +242,16 @@ class Solver:
         return all_e_map
 
 
-def main():
-    solver = Solver()
+def main(args):
+    if len(args) == 4:
+        param = {'seed': int(args[1]), 'd_rate': int(args[2]), 'min_M': int(args[3])}
+        solver = Solver(param)
+    else:
+        solver = Solver()
     result = solver.solve()
     print(result, file=sys.stderr)
 
 
 if __name__ == "__main__":
-    main()
+    args = sys.argv
+    main(args)
