@@ -25,7 +25,7 @@ def main(i):
 
 if __name__ == '__main__':
     start = time.time()
-    trial = 6000
+    trial = 200
     result = []
     '''
     for i in tqdm(range(trial)):

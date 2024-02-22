@@ -2,6 +2,8 @@ from dataclasses import dataclass
 import sys
 import numpy as np
 import random
+import itertools
+import math
 
 
 @dataclass
@@ -69,8 +71,8 @@ class Judge:
 
 class Solver:
 
-    def __init__(self, param={'seed': 0, 'd_rate': 4, 'min_M': 0}):
-        self.judge = Judge()
+    def __init__(self, judge, param={'seed': 0, 'd_rate': 4, 'min_M': 0}):
+        self.judge = judge
         self.N, self.M, self.e = self.judge.read_initial()
         self.oil_fields = self.judge.read_oil_fields()
         self.oil_maps = []  # 油田ごとの期待値
@@ -95,13 +97,7 @@ class Solver:
         self._show_map(self.all_e_maps)
         sorted_poses = self._sort_map(self.pos_prob)
         while len(sorted_poses) > 0:
-            if self.M > self.min_M and self.found_d < sum_d/self.d_rate:
-                i = int(random.expovariate(lambd=1))
-                # i = int(random.random()*(len(sorted_poses)/2))
-                i = min(len(sorted_poses)-1, i)
-            else:
-                i = 0
-            e, pos = sorted_poses[i]
+            e, pos = sorted_poses[0]
             if e == 0:  # 埋蔵量の期待値が0だと処理終了
                 break
             if self.mined[pos.i][pos.j]:  # 採掘済みはスキップ
@@ -241,17 +237,131 @@ class Solver:
                 '''
         return all_e_map
 
+class Solver2:
 
-def main(args):
-    if len(args) == 4:
-        param = {'seed': int(args[1]), 'd_rate': int(args[2]), 'min_M': int(args[3])}
-        solver = Solver(param)
+    def __init__(self, judge):
+        self.judge = judge
+        self.N, self.M, self.e = self.judge.read_initial()
+        self.oil_fields = self.judge.read_oil_fields()
+
+    def solve(self) -> dict:
+        # 配置の全パターンを列挙
+        self.sum_d = 0
+        self.max_i = [0 for _ in range(self.M)]
+        self.max_j = [0 for _ in range(self.M)]
+        self.M_pos = []
+        for m in range(self.M):
+            poly = self.oil_fields[m]
+            self.sum_d += poly.d
+            tmp = [[0]*self.N for _ in range(self.N)]
+            for pos in poly.poses:
+                self.max_i[m] = max(self.max_i[m], pos.i)
+                self.max_j[m] = max(self.max_j[m], pos.j)
+                tmp[pos.i][pos.j] += 1
+            self.M_pos.append(tmp)
+        self.M_cnt = []
+        for m in range(self.M):
+            self.M_cnt.append((self.N-self.max_i[m]) * (self.N-self.max_j[m]))
+        self.pattern = list(itertools.product(*[range(self.M_cnt[m]) for m in range(self.M)]))
+        Q_cnt = len(self.pattern)
+        self.prob_Q = [1/Q_cnt for _ in self.pattern]
+
+        # メイン処理
+        random.seed(0)
+        while True:
+            trial_p = []
+            poses = []
+            # 占う場所を設定
+            for m in range(self.M):
+                p = random.randint(0, self.M_cnt[m]-1)
+                trial_p.append(p)
+                for pos in self.oil_fields[m].poses:
+                    poses.append(Pos(pos.i+(p//(self.N-self.max_j[m])), pos.j+(p%(self.N-self.max_j[m]))))
+            # 重複の場所を削除
+            poses = sorted(poses, key=lambda x: (x.i, x.j))
+            pre_i, pre_j = -1, -1
+            tmp = []
+            for pos in poses:
+                if pos.i == pre_i and pos.j == pre_j:
+                    continue
+                tmp.append(pos)
+                pre_i, pre_j = pos.i, pos.j
+            poses = tmp
+
+            v = self._mining(poses)
+            self._update_prob(v, poses)
+            if max(self.prob_Q) > 0.9:
+                ret = self._answer()
+                if ret == 1:
+                    break
+        result = {'N': self.N, 'M': self.M, 'e': self.e, 'd': self.sum_d, 'cost': self.judge.cost, 'score': self.judge.cost*(10**6)}
+        return result
+    
+    def _mining(self, poses: list[Pos]) -> int:
+        d = len(poses)
+        v = self.judge.query(Polyomino(d, poses))
+        # self.judge.comment(f'mining: v={v}, poses={poses}')
+        return v
+
+    def _update_prob(self, v: float, poses: list[Pos]) -> None:
+        prob_v_Q = []
+        for pp in self.pattern:
+            tmp = 0
+            for m in range(self.M):
+                p = pp[m]
+                for pos in poses:
+                    i2 = pos.i-(p//(self.N-self.max_j[m]))
+                    j2 = pos.j-(p%(self.N-self.max_j[m]))
+                    if 0 <= i2 < self.N and 0 <= j2 < self.N:
+                        tmp += self.M_pos[m][i2][j2]
+            prob_v_Q.append(self._gauss_dist(v, (len(poses)-tmp)*self.e+tmp*(1-self.e), len(poses)*self.e*(1-self.e)))
+        prob_v = sum([prob_v_Q[i]*self.prob_Q[i] for i in range(len(prob_v_Q))])
+        for i in range(len(self.pattern)):
+            self.prob_Q[i] = self.prob_Q[i] * prob_v_Q[i] / prob_v
+        
+    def _gauss_dist(self, x: float, m: float, s2: float):
+        ret = 1/(2*math.pi*s2)**(1/2)
+        ret *= math.exp(-(x-m)**2/(2*s2))
+        return ret
+
+    def _answer(self) -> None:
+        max_i, max_prob = 0, 0
+        for i in range(len(self.pattern)):
+            if max_prob < self.prob_Q[i]:
+                max_prob = self.prob_Q[i]
+                max_i = i
+        poses = []
+        self.judge.comment(f'max_prob_Q {max(self.prob_Q)}, {sum(self.prob_Q)}')
+        self.judge.comment(f'Q {max_i}, max_prob_Q {max_prob}')
+        for m in range(self.M):
+            p = self.pattern[max_i][m]
+            for pos in self.oil_fields[m].poses:
+                poses.append(Pos(pos.i+(p//(self.N-self.max_j[m])), pos.j+(p%(self.N-self.max_j[m]))))
+        # 重複の場所を削除
+        poses = sorted(poses, key=lambda x: (x.i, x.j))
+        pre_i, pre_j = -1, -1
+        tmp = []
+        for pos in poses:
+            if pos.i == pre_i and pos.j == pre_j:
+                continue
+            tmp.append(pos)
+            pre_i, pre_j = pos.i, pos.j
+        poses = tmp
+        ret = self.judge.answer(poses)
+        if ret == 0:
+            self.prob_Q[max_i] = 0
+        return ret
+    
+
+def main():
+    judge = Judge()
+    if judge.M == 2:
+        solver = Solver2(judge)
     else:
-        solver = Solver()
+        solver = Solver(judge)
     result = solver.solve()
     print(result, file=sys.stderr)
 
 
 if __name__ == "__main__":
-    args = sys.argv
-    main(args)
+    main()
