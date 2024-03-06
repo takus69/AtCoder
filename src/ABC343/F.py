@@ -49,40 +49,58 @@ class SegTree:
         return self._d[1]
 
     def _update(self, k):
-        print(self._d)
         self._d[k] = self._op(self._d[2 * k], self._d[2 * k + 1])
 
 N, Q, = map(int, input().split())
 A = list(map(int, input().split()))
 
 def e():
-    return {-1: 1, 0: 1}
+    return (0, 0, -1, 0)
 
 def op(a1, a2):
-    print('a1', a1)
-    tmp = {}
-    for k, v in a1.items():
-        tmp = tmp.get(k, 0) + v
-    for k, v in a2.items():
-        tmp = tmp.get(k, 0) + v
-    tmp = sorted(tmp.items(), key=lambda x: x[0], reverse=True)
-    return {tmp[0][0]: tmp[0][1], tmp[1][0]: tmp[1][1]}
+    # print('a1', a1)
+    tmp = [0, 0, 0, 0, 0, 0, 0, 0]
+    i1, i2 = 0, 0
+    i3 = 0
+    while i1 < 2 or i2 < 2:
+        if i1 < 2:
+            aa1 = a1[i1*2]
+        else:
+            aa1 = -2
+        if i2 < 2:
+            aa2 = a2[i2*2]
+        else:
+            aa2 = -2
+        if aa1 > aa2:
+            tmp[i3*2] = aa1
+            tmp[i3*2+1] = a1[i1*2+1]
+            i1 += 1
+        elif aa1 == aa2:
+            tmp[i3*2] = aa1
+            tmp[i3*2+1] = a1[i1*2+1]+a2[i2*2+1]
+            i1 += 1
+            i2 += 1
+        else:
+            tmp[i3*2] = aa2
+            tmp[i3*2+1] = a2[i2*2+1]
+            i2 += 1
+        i3 += 1
+    return tmp[:4]
 
 sg = SegTree(op, e, N)
 for i in range(N):
-    sg.set(i, A[i])
+    sg.set(i, (A[i], 1, -1, 0))
 
 for _ in range(Q):
+    # print('d', sg._d)
     q = list(map(int, input().split()))
     if q[0] == 1:
         p = q[1]-1
         x = q[2]
-        sg.set(p, x)
+        sg.set(p, (x, 1, -1, 0))
     else:
         l = q[1]-1
-        r = q[2]-1
+        r = q[2]
         ans = sg.prod(l, r)
-        print(ans)
-
-        
-        
+        # print('ans', ans)
+        print(ans[3])
