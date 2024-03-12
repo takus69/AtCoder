@@ -2,9 +2,8 @@ from dataclasses import dataclass
 import sys
 import numpy as np
 import random
-import itertools
 import math
-from scipy.stats import norm 
+import itertools
 
 
 @dataclass
@@ -72,7 +71,7 @@ class Judge:
 
 class Solver:
 
-    def __init__(self, judge, param={'seed': 0, 'd_rate': 4, 'min_M': 0}):
+    def __init__(self, judge):
         self.judge = judge
         self.N, self.M, self.e = self.judge.read_initial()
         self.oil_fields = self.judge.read_oil_fields()
@@ -82,10 +81,6 @@ class Solver:
         self.ans = []  # 解答。埋蔵量がある位置
         self.v_map = [[2*self.M]*self.N for _ in range(self.N)]  # 埋蔵量を保持
         self.v_map2 = [[0]*self.N for _ in range(self.N)]  # 採掘せずに有無が確定した埋蔵量を保持
-        # パラメータ
-        self.seed = param['seed']
-        self.d_rate = param['d_rate']
-        self.min_M = param['min_M']
 
     def solve(self) -> dict:
         sum_d = 0
@@ -95,7 +90,7 @@ class Solver:
             sum_d += poly.d
             self.e_maps.append(self._expected_map(poly))
         self.all_e_maps = self._merge_maps()
-        # self._show_map(self.all_e_maps)
+        self._show_map(self.all_e_maps)
         sorted_poses = self._sort_map(self.pos_prob)
         while len(sorted_poses) > 0:
             e, pos = sorted_poses[0]
@@ -104,26 +99,24 @@ class Solver:
             if self.mined[pos.i][pos.j]:  # 採掘済みはスキップ
                 continue
             v = self._mining(pos)
+            self.v_map[pos.i][pos.j] = v - self.v_map2[pos.i][pos.j]
+            if self.v_map[pos.i][pos.j] == 0:
+                self.all_e_maps = self._update_e_maps(pos)
+            self.found_d += v
             if self.found_d == sum_d:  # 油田が全て見つかったら処理終了
                 break
             sorted_poses = self._sort_map(self.pos_prob)
         ret = self.judge.answer(self.ans)
         assert ret == 1
-        result = {'N': self.N, 'M': self.M, 'e': self.e, 'd': sum_d, 'cost': self.judge.cost, 'score': self.judge.cost*(10**6)}
+        result = {'N': self.N, 'M': self.M, 'e': self.e, 'cost': self.judge.cost, 'score': self.judge.cost*(10**6)}
         return result
     
     def _mining(self, pos) -> int:
         v = self.judge.query(Polyomino(1, [pos]))
         self.mined[pos.i][pos.j] = 1
-        # self.judge.comment(f'query: (1, {pos}), v: {v}')
-
-        # 埋蔵量の情報を保存
-        self.v_map[pos.i][pos.j] = v - self.v_map2[pos.i][pos.j]
-        self.found_d += v
+        self.judge.comment(f'query: (1, {pos}), v: {v}')
         if v > 0:
             self.ans.append(pos)
-            if self.v_map[pos.i][pos.j] == 0:
-                self.all_e_maps = self._update_e_maps(pos)
         else:
             # 埋蔵量の期待値を更新
             self.all_e_maps = self._update_e_maps(pos)
@@ -157,7 +150,6 @@ class Solver:
                         self.ans.append(Pos(i2, j2))
                         self.mined[i2][j2] = 1
                         self.found_d += 1
-                    # 採掘済みで埋蔵量の元が全て特定された位置は他にないためe_mapsを更新
                     self.v_map[i2][j2] -= 1
                     self.v_map2[i2][j2] += 1
                     if self.v_map[i2][j2] == 0:
@@ -170,9 +162,8 @@ class Solver:
             for j in range(self.N):
                 if not self.mined[i][j]:
                     e = e_map[i][j]
-                    if e > 0:
-                        sort_poses.append((e, Pos(i, j)))
-        random.seed(self.seed)
+                    sort_poses.append((e, Pos(i, j)))
+        random.seed(0)
         random.shuffle(sort_poses)
         sort_poses = sorted(sort_poses, key=lambda x:x[0], reverse=True)
         return sort_poses
@@ -180,7 +171,6 @@ class Solver:
     def _show_map(self, e_map) -> None:
         e_max = max(map(max, e_map))
         self.judge.comment(f'e_max: {e_max}, median: {np.median(e_map)}, mean: {np.mean(e_map)}')
-        self.judge.comment(f'{[cnt for cnt in self.pattern_cnt]}')
         for i in range(self.N):
             for j in range(self.N):
                 G = 255
@@ -218,15 +208,13 @@ class Solver:
         return e_maps
     
     def _merge_maps(self):
-        # 存在確率
+        # 存在確率、期待値算出
+        all_e_map = np.zeros((self.N, self.N))
         tmp = np.ones((self.N, self.N))
         for i in range(self.M):
             tmp *= 1 - self.oil_maps[i]/self.pattern_cnt[i]  # 存在(しない)確率
+            all_e_map += self.oil_maps[i] / self.pattern_cnt[i]  # 期待値
         self.pos_prob = np.ones((self.N, self.N)) - tmp
-        # 期待値(miningが0でパターンを減らせる期待値)
-        all_e_map = np.zeros((self.N, self.N))
-        for i in range(self.M):
-            all_e_map += self.oil_maps[i] * (1-self.pos_prob)
         # 存在確率が1は解答に追加
         for i in range(self.N):
             for j in range(self.N):
@@ -234,12 +222,11 @@ class Solver:
                     self.mined[i][j] = 1
                     self.ans.append(Pos(i, j))
                     self.found_d += 1
-                '''
-                if not self.mined[i][j] and self.pos_prob[i][j] == 0:
-                    self.mined[i][j] = 1
-                    self.all_e_maps = self._update_e_maps(Pos(i, j))
-                '''
+                # if not self.mined[i][j] and self.pos_prob[i][j] == 0:
+                #     self.mined[i][j] = 1
+                #     self._update_e_maps(Pos(i, j))
         return all_e_map
+
 
 class Solver2:
 
@@ -307,32 +294,6 @@ class Solver2:
         # self.judge.comment(f'mining: v={v}, poses={poses}')
         return v
 
-    def _entropy(self) -> float:
-        h = 0
-        for i in range(len(self.pattern)):
-            p = self.prob_Q[i]
-            if p > 0:
-                h += -p*math.log(p)
-        return h
-    
-    def _entropy2(self, poses) -> float:
-        '''
-        prob_v_Q = []
-        for pp in self.pattern:
-            tmp = 0
-            for m in range(self.M):
-                p = pp[m]
-                for pos in poses:
-                    i2 = pos.i-(p//(self.N-self.max_j[m]))
-                    j2 = pos.j-(p%(self.N-self.max_j[m]))
-                    if 0 <= i2 < self.N and 0 <= j2 < self.N:
-                        tmp += self.M_pos[m][i2][j2]
-            prob_v_Q.append(self._gauss_dist(v, (len(poses)-tmp)*self.e+tmp*(1-self.e), len(poses)*self.e*(1-self.e)))
-        prob_v = sum([prob_v_Q[i]*self.prob_Q[i] for i in range(len(prob_v_Q))])
-        for i in range(len(self.pattern)):
-            self.prob_Q[i] = self.prob_Q[i] * prob_v_Q[i] / prob_v
-        '''
-
     def _update_prob(self, v: float, poses: list[Pos]) -> None:
         prob_v_Q = []
         for pp in self.pattern:
@@ -348,23 +309,8 @@ class Solver2:
         prob_v = sum([prob_v_Q[i]*self.prob_Q[i] for i in range(len(prob_v_Q))])
         for i in range(len(self.pattern)):
             self.prob_Q[i] = self.prob_Q[i] * prob_v_Q[i] / prob_v
-
-    def _cdf(self, x: float, m: float, s2: float) -> float:
-        if x > 0:
-            p1 = self._gauss_dist(x+s2/10, m, s2)
-            p2 = self._gauss_dist(x, m, s2)
-            p3 = self._gauss_dist(x-s2/10, m, s2)
-            ret = ((abs(p1-p2)*s2/10)/2 + (abs(p2-p3)*s2/10)/2)/2
-        else:
-            p1 = self._gauss_dist(x, m, s2)
-            p2 = self._gauss_dist(m, m, s2)
-            if m < 0:
-                ret = 0.5 + ((p1+p2)*abs(x-m)/s2)/2
-            else:
-                ret = 0.5 - ((p1+p2)*abs(x-m)/s2)/2
-        return ret
-
-    def _gauss_dist(self, x: float, m: float, s2: float) -> float:
+        
+    def _gauss_dist(self, x: float, m: float, s2: float):
         ret = 1/(2*math.pi*s2)**(1/2)
         ret *= math.exp(-(x-m)**2/(2*s2))
         return ret
