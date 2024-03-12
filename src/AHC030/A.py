@@ -294,6 +294,10 @@ class Solver2:
 
             v = self._mining(poses)
             self._update_prob(v, poses)
+            if self.judge.cost > 3:
+                solver = Solver(self.judge)
+                result = solver.solve()
+                break
             if max(self.prob_Q) > 0.9:
                 ret = self._answer()
                 if ret == 1:
@@ -355,7 +359,7 @@ class Solver2:
             p2 = self._gauss_dist(x, m, s2)
             p3 = self._gauss_dist(x-s2/10, m, s2)
             ret = ((abs(p1-p2)*s2/10)/2 + (abs(p2-p3)*s2/10)/2)/2
-        else:
+        elif False:
             p1 = self._gauss_dist(x, m, s2)
             p2 = self._gauss_dist(m, m, s2)
             if m < 0:

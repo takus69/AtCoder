@@ -35,9 +35,11 @@ if __name__ == '__main__':
         N = r['N']
         M = r['M']
         e = r['e']
+        d = r['d']
         cost = r['cost']
         score = r['score']
-        data = [i, N, M, e, cost, score, t]
+        c_M = cost / M
+        data = [i, N, M, e, d, cost, score, c_M, t]
         result.append(data)
     '''
     processes = multiprocessing.cpu_count()
