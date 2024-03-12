@@ -359,7 +359,7 @@ class Solver2:
             p2 = self._gauss_dist(x, m, s2)
             p3 = self._gauss_dist(x-s2/10, m, s2)
             ret = ((abs(p1-p2)*s2/10)/2 + (abs(p2-p3)*s2/10)/2)/2
-        elif False:
+        else:
             p1 = self._gauss_dist(x, m, s2)
             p2 = self._gauss_dist(m, m, s2)
             if m < 0:
