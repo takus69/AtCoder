@@ -348,24 +348,18 @@ class Solver2:
                     j2 = pos.j-(p%(self.N-self.max_j[m]))
                     if 0 <= i2 < self.N and 0 <= j2 < self.N:
                         tmp += self.M_pos[m][i2][j2]
-            prob_v_Q.append(self._gauss_dist(v, (len(poses)-tmp)*self.e+tmp*(1-self.e), len(poses)*self.e*(1-self.e)))
+            prob_v_Q.append(self._cdf(v, (len(poses)-tmp)*self.e+tmp*(1-self.e), len(poses)*self.e*(1-self.e)))
         prob_v = sum([prob_v_Q[i]*self.prob_Q[i] for i in range(len(prob_v_Q))])
         for i in range(len(self.pattern)):
             self.prob_Q[i] = self.prob_Q[i] * prob_v_Q[i] / prob_v
 
     def _cdf(self, x: float, m: float, s2: float) -> float:
         if x > 0:
-            p1 = self._gauss_dist(x+s2/10, m, s2)
-            p2 = self._gauss_dist(x, m, s2)
-            p3 = self._gauss_dist(x-s2/10, m, s2)
-            ret = ((abs(p1-p2)*s2/10)/2 + (abs(p2-p3)*s2/10)/2)/2
+            ret = self._gauss_dist(x, m, s2)
         else:
             p1 = self._gauss_dist(x, m, s2)
             p2 = self._gauss_dist(m, m, s2)
-            if m < 0:
-                ret = 0.5 + ((p1+p2)*abs(x-m)/s2)/2
-            else:
-                ret = 0.5 - ((p1+p2)*abs(x-m)/s2)/2
+            ret = 0.5 + ((p1+p2)*(x-m)/s2)/2
         return ret
 
     def _gauss_dist(self, x: float, m: float, s2: float) -> float:
