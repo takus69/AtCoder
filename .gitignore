@@ -12,3 +12,4 @@ out
 *.pkl
 refs
 *.db
+*.pdb
