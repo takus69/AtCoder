@@ -267,43 +267,132 @@ class Solver2:
         for m in range(self.M):
             self.M_cnt.append((self.N-self.max_i[m]) * (self.N-self.max_j[m]))
         self.pattern = list(itertools.product(*[range(self.M_cnt[m]) for m in range(self.M)]))
+        self.P_pos = []
+        for pp in self.pattern:
+            tmp = [[0]*self.N for _ in range(self.N)]
+            for m in range(self.M):
+                p = pp[m]
+                poly = self.oil_fields[m]
+                for pos in poly.poses:
+                    i2 = pos.i+(p//(self.N-self.max_j[m]))
+                    j2 = pos.j+(p%(self.N-self.max_j[m]))
+                    if 0 <= i2 < self.N and 0 <= j2 < self.N:
+                        tmp[i2][j2] += self.M_pos[m][pos.i][pos.j]
+            self.P_pos.append(tmp)
         Q_cnt = len(self.pattern)
         self.prob_Q = [1/Q_cnt for _ in self.pattern]
 
         # メイン処理
         random.seed(0)
         while True:
-            trial_p = []
-            poses = []
             # 占う場所を設定
-            for m in range(self.M):
-                p = random.randint(0, self.M_cnt[m]-1)
-                trial_p.append(p)
-                for pos in self.oil_fields[m].poses:
-                    poses.append(Pos(pos.i+(p//(self.N-self.max_j[m])), pos.j+(p%(self.N-self.max_j[m]))))
-            # 重複の場所を削除
-            poses = sorted(poses, key=lambda x: (x.i, x.j))
-            pre_i, pre_j = -1, -1
-            tmp = []
-            for pos in poses:
-                if pos.i == pre_i and pos.j == pre_j:
-                    continue
-                tmp.append(pos)
-                pre_i, pre_j = pos.i, pos.j
-            poses = tmp
-
+            poses = self._fortune()
+            # 占い
             v = self._mining(poses)
-            self._update_prob(v, poses)
-            if self.judge.cost > 3:
+            # 占い結果からパターンの確率を更新
+            self.prob_Q = self._update_prob(self.prob_Q, v, poses)
+            # コストが10超になったら、諦める
+            if self.judge.cost > 10:
                 solver = Solver(self.judge)
                 result = solver.solve()
                 break
+            # 90%以上の確率で解答してみる
             if max(self.prob_Q) > 0.9:
                 ret = self._answer()
                 if ret == 1:
                     break
         result = {'N': self.N, 'M': self.M, 'e': self.e, 'd': self.sum_d, 'cost': self.judge.cost, 'score': self.judge.cost*(10**6)}
         return result
+
+    def _fortune(self):
+        # 占いの初期場所
+        trial_p = []
+        poses = []
+        for m in range(self.M):
+            p = random.randint(0, self.M_cnt[m]-1)
+            trial_p.append(p)
+            for pos in self.oil_fields[m].poses:
+                poses.append(Pos(pos.i+(p//(self.N-self.max_j[m])), pos.j+(p%(self.N-self.max_j[m]))))
+        # 重複の場所を削除
+        poses = sorted(poses, key=lambda x: (x.i, x.j))
+        pre_i, pre_j = -1, -1
+        tmp = []
+        for pos in poses:
+            if pos.i == pre_i and pos.j == pre_j:
+                continue
+            tmp.append(pos)
+            pre_i, pre_j = pos.i, pos.j
+        poses = tmp
+        pos_ij = [Pos(i, j) for i in range(self.N) for j in range(self.N)]
+        '''
+        # ランダムに占いの場所を設定
+        cnt = random.randint(1, self.N**2)
+        poses = random.sample(pos_ij, cnt)
+        '''
+        poses_flg = [[False]*self.N for _ in range(self.N)]
+        for pos in poses:
+            poses_flg[pos.i][pos.j] = True
+
+        # 現時点の各マップの埋蔵量の期待値を算出
+        e_cnt = [[0]*self.N for _ in range(self.N)]
+        for i in range(len(self.pattern)):
+            pp = self.pattern[i]
+            for m in range(self.M):
+                p = pp[m]
+                poly = self.oil_fields[m]
+                for pos in poly.poses:
+                    i2 = pos.i+(p//(self.N-self.max_j[m]))
+                    j2 = pos.j+(p%(self.N-self.max_j[m]))
+                    if 0 <= i2 < self.N and 0 <= j2 < self.N:
+                        e_cnt[i2][j2] += self.prob_Q[i] * self.M_pos[m][pos.i][pos.j]
+
+        # 現時点のエントロピー
+        h = self._entropy(self.prob_Q)
+
+        # パターンごとの埋蔵量を事前計算
+        poses_cnt = []
+        for i in range(len(self.pattern)):
+            tmp = 0
+            for pos in poses:
+                tmp += self.P_pos[i][pos.i][pos.j]
+            poses_cnt.append(tmp)
+
+        # 埋蔵量vの期待値
+        v = 0
+        for pos in poses:
+            v += e_cnt[pos.i][pos.j]
+        m = (len(poses)-v)*self.e + v*(1-self.e)
+        s2 = len(poses)*self.e*(1-self.e)
+        prob_Q = self._update_prob(self.prob_Q, m, poses, poses_cnt)
+        h2 = self._entropy(prob_Q)
+        max_val = (h - h2)*(len(poses)**(1/2))  # 評価関数
+
+        for _ in range(100):
+            # 占いの場所を1つ追加
+            pos = random.sample(pos_ij, 1)[0]
+            if poses_flg[pos.i][pos.j]:
+                continue
+            poses.append(pos)
+            poses_flg[pos.i][pos.j] = True
+            for i in range(len(self.pattern)):
+                poses_cnt[i] += self.P_pos[i][pos.i][pos.j]
+
+            # 埋蔵量vの期待値
+            v += e_cnt[pos.i][pos.j]
+            m = (len(poses)-v)*self.e + v*(1-self.e)
+            s2 = len(poses)*self.e*(1-self.e)
+            prob_Q = self._update_prob(self.prob_Q, m, poses, poses_cnt)
+            h2 = self._entropy(prob_Q)
+            val = (h - h2)*(len(poses)**(1/2))  # 評価関数
+            if max_val < val:
+                max_val = val
+            else:
+                poses = poses[:-1]
+                for i in range(len(self.pattern)):
+                    poses_cnt[i] -= self.P_pos[i][pos.i][pos.j]
+                poses_flg[pos.i][pos.j] = False
+            
+        return poses
     
     def _mining(self, poses: list[Pos]) -> int:
         d = len(poses)
@@ -311,47 +400,29 @@ class Solver2:
         # self.judge.comment(f'mining: v={v}, poses={poses}')
         return v
 
-    def _entropy(self) -> float:
+    def _entropy(self, prob_Q) -> float:
         h = 0
         for i in range(len(self.pattern)):
-            p = self.prob_Q[i]
+            p = prob_Q[i]
             if p > 0:
                 h += -p*math.log(p)
         return h
     
-    def _entropy2(self, poses) -> float:
-        '''
+    def _update_prob(self, prob_Q: list[float], v: float, poses: list[Pos], poses_cnt: list[int] = None) -> None:
         prob_v_Q = []
-        for pp in self.pattern:
-            tmp = 0
-            for m in range(self.M):
-                p = pp[m]
-                for pos in poses:
-                    i2 = pos.i-(p//(self.N-self.max_j[m]))
-                    j2 = pos.j-(p%(self.N-self.max_j[m]))
-                    if 0 <= i2 < self.N and 0 <= j2 < self.N:
-                        tmp += self.M_pos[m][i2][j2]
-            prob_v_Q.append(self._gauss_dist(v, (len(poses)-tmp)*self.e+tmp*(1-self.e), len(poses)*self.e*(1-self.e)))
-        prob_v = sum([prob_v_Q[i]*self.prob_Q[i] for i in range(len(prob_v_Q))])
         for i in range(len(self.pattern)):
-            self.prob_Q[i] = self.prob_Q[i] * prob_v_Q[i] / prob_v
-        '''
-
-    def _update_prob(self, v: float, poses: list[Pos]) -> None:
-        prob_v_Q = []
-        for pp in self.pattern:
-            tmp = 0
-            for m in range(self.M):
-                p = pp[m]
+            if poses_cnt is None:
+                tmp = 0
                 for pos in poses:
-                    i2 = pos.i-(p//(self.N-self.max_j[m]))
-                    j2 = pos.j-(p%(self.N-self.max_j[m]))
-                    if 0 <= i2 < self.N and 0 <= j2 < self.N:
-                        tmp += self.M_pos[m][i2][j2]
+                    tmp += self.P_pos[i][pos.i][pos.j]
+            else:
+                tmp = poses_cnt[i]
             prob_v_Q.append(self._cdf(v, (len(poses)-tmp)*self.e+tmp*(1-self.e), len(poses)*self.e*(1-self.e)))
-        prob_v = sum([prob_v_Q[i]*self.prob_Q[i] for i in range(len(prob_v_Q))])
+        prob_v = sum([prob_v_Q[i]*prob_Q[i] for i in range(len(prob_v_Q))])
+        prob_Q2 = []
         for i in range(len(self.pattern)):
-            self.prob_Q[i] = self.prob_Q[i] * prob_v_Q[i] / prob_v
+            prob_Q2.append(prob_Q[i] * prob_v_Q[i] / prob_v)
+        return prob_Q2
 
     def _cdf(self, x: float, m: float, s2: float) -> float:
         if x > 0:
